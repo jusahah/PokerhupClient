@@ -66,6 +66,8 @@ export default {
       console.log("onTableLoad");
       console.log(paper.view.size);
 
+      var objectRepository = pokerHupController.getRepository();
+
       tableLayer = new paper.Layer({
           name: 'tableLayer',
           children: [tableSVG],
@@ -76,10 +78,10 @@ export default {
       tableLayer.pivot = {x: 0, y: 0};
       tableLayer.activate();
 
-      pokerHupController.setTableLayer(tableLayer);
-      pokerHupController.setTable(tableSVG);
+      objectRepository.setTableLayer(tableLayer);
+      objectRepository.setTable(tableSVG);
 
-      pokerHupController.setButtons(this.createButtonBar());
+      objectRepository.setButtons(this.createButtonBar());
 
       
       tableSVG.applyMatrix = false;
@@ -100,7 +102,7 @@ export default {
       return Promise.resolve()
       .then(this.createCards.bind(this))
       .then((cards) => {
-        pokerHupController.setCards(cards);
+        objectRepository.setCards(cards);
       })
       .then(() => {
         this.ready = true;
@@ -113,7 +115,7 @@ export default {
     // Point translations
     translateRelativeToProjectPoint: function(relPoint) {
 
-      var tableBounds = pokerHupController.getTable().bounds;
+      var tableBounds = pokerHupController.getRepository().getTable().bounds;
 
       console.warn("Table bounds");
       console.log(tableBounds);
@@ -126,7 +128,7 @@ export default {
     },
 
     relativeSize: function(size) {
-        var tableLayer = pokerHupController.getTableLayer();
+        var tableLayer = pokerHupController.getRepository().getTableLayer();
         var scaledSize = tableLayer.bounds.width * size;
 
         return scaledSize;
@@ -140,7 +142,7 @@ export default {
         fillColor: 'blue'
       });
 
-      pokerHupController.getTableLayer().addChild(buttonsGroup);
+      pokerHupController.getRepository().getTableLayer().addChild(buttonsGroup);
 
       buttonsGroup.pivot = {x: 0, y: 0};
 
@@ -170,42 +172,105 @@ export default {
 
     },
 
-    setOrigScaling: function(paperItem) {
+    setOrigScaling: function(paperItem, widthRelativeToTableWidth) {
 
-      var currScalingFactor = pokerHupController.getTable().bounds.width / defWidths.table;
+      widthRelativeToTableWidth = widthRelativeToTableWidth || 1;
+
+      var currScalingFactor = pokerHupController.getRepository().getTable().bounds.width / defWidths.table;
 
       console.log("Curr scaling factor is " + currScalingFactor);
 
       var currScale = paperItem.getScaling().x;
 
-      paperItem.scale(currScalingFactor / currScale);
+      paperItem.scale(currScalingFactor / currScale * widthRelativeToTableWidth);
     },
 
     createCards: function() {
 
-      // Cards have no group as they need to be able to roam free.
       var that = this;
 
+      var cardsGroup = new paper.Group({
+        name: 'cardsGroup',
+        position: {x: 0, y: 0}
+      });
+
+      cardsGroup.applyMatrix = false;
+      cardsGroup.pivot = {x: 0, y: 0};
+
+      var cardsContainer = {
+        group: cardsGroup,
+        facecards: null,
+        cards: null
+      }
+
       return new Promise(function(resolve, reject) {
-        paper.project.importSVG('/static/svg/facecard.svg', {
+        paper.project.importSVG('/static/svg/cards/sface.svg', {
           onLoad: function(facecardSVG) {
             facecardSVG.visible = false;
             var cardToTable = facecardSVG.bounds.width / defWidths.table;
             console.log("Face card rel to table: " + cardToTable);
 
-            that.setOrigScaling(facecardSVG);
+            that.setOrigScaling(facecardSVG, 1.4);
 
             var facecards = _.times(6, (nth) => {
               var c = facecardSVG.clone();
               c.visible = false; // Hidden by default
+              cardsGroup.addChild(c);
               return c;
             });
+            // Set facecards
+            cardsContainer.facecards = facecards;
 
-            resolve({cards: null, facecards: facecards});          
+            resolve();          
           }
         });
         
       })
+      .then(() => {
+        // Load all actual cards
+
+        var ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 't', 'j', 'q', 'k', 'a'];
+        var suits = ['h', 'd'];
+
+        var cards = [];
+
+        _.each(ranks, (rank) => {
+          _.each(suits, (suit) => {
+            cards.push(rank + "" + suit);
+          });
+        });
+
+        return cards;
+
+
+      })
+      .delay(100)
+
+      .map((card) => {
+        return new Promise(function(resolve, reject) {
+          console.log("Loading card " + card);
+          paper.project.importSVG('/static/svg/cards/s' + card + '.svg', {
+            onLoad: function(paperCardItem) {
+              console.log(paperCardItem);
+              console.log("Paper card loaded!")
+              paperCardItem.visible = false;
+              paperCardItem.pokerhup_name = card;
+              that.setOrigScaling(paperCardItem, 1.4);
+              cardsGroup.addChild(paperCardItem);
+              resolve(paperCardItem);
+            }
+          })
+        });
+      })
+      .then((paperCards) => {
+        console.warn("All cards loaded");
+        cardsContainer.cards = paperCards;
+
+        // Return cardsContainer to original caller of createCards!
+        return cardsContainer;
+
+      })
+      
 
 
     },
