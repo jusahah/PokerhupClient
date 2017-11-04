@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="297mm"
+   height="210mm"
+   viewBox="0 0 1052.3622 744.09448"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="table.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="48.857115"
+     inkscape:cy="413.11938"
+     inkscape:document-units="px"
+     inkscape:current-layer="svg2"
+     showgrid="false"
+     inkscape:window-width="1855"
+     inkscape:window-height="1056"
+     inkscape:window-x="1505"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="matrix(1.4340304,0,0,1.587146,-10.431562,-263.35858)">
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:'URW Bookman L';-inkscape-font-specification:'URW Bookman L';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="234.28571"
+       y="565.21936"
+       id="text4140"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan4142"
+         x="234.28571"
+         y="565.21936"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'URW Bookman L';-inkscape-font-specification:'URW Bookman L'" /></text>
+    <g
+       id="g4280"
+       transform="matrix(1.2466011,0,0,1.2293441,-79.414643,-315.52766)">
+      <rect
+         y="392.36221"
+         x="67.14286"
+         height="380"
+         width="591.42859"
+         id="rect4136"
+         style="fill:#bc4f36;fill-opacity:1;stroke:none;stroke-width:2.9000001;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <ellipse
+         ry="135.61784"
+         rx="248.47498"
+         cy="560.21936"
+         cx="363.5715"
+         id="path4138"
+         style="fill:#5dbc36;fill-opacity:1;stroke:#2c2c2c;stroke-width:4.52148342;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <g
+         style="opacity:0.45"
+         transform="matrix(0.86998001,0,0,0.86998001,44.317751,73.153864)"
+         id="g4166">
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:Norasi;-inkscape-font-specification:Norasi;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:0.41139239;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           x="248.15102"
+           y="568.22211"
+           id="text4144-5"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan4146-4"
+             x="248.15102"
+             y="568.22211">Nollaversio IT</tspan></text>
+        <text
+           xml:space="preserve"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:40px;line-height:125%;font-family:Norasi;-inkscape-font-specification:Norasi;letter-spacing:0px;word-spacing:0px;fill:#c7ed1c;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           x="247.14285"
+           y="566.64789"
+           id="text4144"
+           sodipodi:linespacing="125%"><tspan
+             sodipodi:role="line"
+             id="tspan4146"
+             x="247.14285"
+             y="566.64789">Nollaversio IT</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>
