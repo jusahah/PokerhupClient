@@ -108,6 +108,8 @@ export default {
         this.ready = true;
       })
       .delay(1000)
+      .then(pokerHupController.dealHoleCards)
+      .delay(500)
       .then(pokerHupController.playFlop);
 
     },
@@ -244,8 +246,7 @@ export default {
 
 
       })
-      .delay(100)
-
+      // Load all card svgs individually
       .map((card) => {
         return new Promise(function(resolve, reject) {
           console.log("Loading card " + card);

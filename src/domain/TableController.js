@@ -15,7 +15,10 @@ function ObjectRepository(pokerCanvas) {
     }
 
     this.getFaceCard = function() {
-        return this.objects.cards.facecards.pop();
+        // Find first free card
+        return _.find(this.objects.cards.facecards, (fc) => {
+            return !fc.pokerhup_state;
+        })
     }
 
     this.getCard = function(cardName) {
@@ -83,9 +86,9 @@ export default function(pokerCanvas) {
     }
 
     // Move to config later
-    var centerCards_FirstX = 0.35;
+    var centerCards_FirstX = 0.375;
     var centerCards_Y = 0.43;
-    var centerCards_OffsetX = 0.065;
+    var centerCards_OffsetX = 0.06;
 
     var POSITIONS = {
         // Static positions
@@ -104,11 +107,11 @@ export default function(pokerCanvas) {
         // Player cards
         p1: {
             1: {x: 0.1, y: 0.6},
-            2: {x: 0.12, y: 0.6},
+            2: {x: 0.142, y: 0.6},
         },  
         p2: {
             1: {x: 0.9, y: 0.6},
-            2: {x: 0.88, y: 0.6},
+            2: {x: 0.858, y: 0.6},
         },           
     }
 
@@ -145,9 +148,18 @@ export default function(pokerCanvas) {
         console.log(newRelativePosition);
         console.log(projectPoint)
 
+
         var moveTween = new TWEEN.Tween(paperItem.position)
             .to({x: projectPoint.x, y: projectPoint.y}, duration)
             //.easing(TWEEN.Easing.Quadratic.In)
+            /*
+            .onStart(function() {
+                var rotationTween = new TWEEN.Tween(paperItem)
+                .to({rotation: 180}, duration);
+
+                rotationTween.start();
+            })
+            */
             .onComplete(function() {
                 resolve(paperItem); // For chaining
             });
@@ -207,6 +219,81 @@ export default function(pokerCanvas) {
         ////////////////////////////////////////
 
         // Returns Promise
+        dealHoleCards: function() {
+            // acquire objects needed to animate dealing of hole cards.
+            var facecards = _.times(4, () => {
+                var c = paperObjects.getFaceCard();
+                //c.fillColor = 'white'; // Fake this being real card
+                // Mark as in use
+                c.pokerhup_state = 'preflop-anim';
+                //c.visible = true;
+                return c;
+            });       
+
+            var positionsToDeal = [
+                POSITIONS.p1[1],
+                POSITIONS.p2[1],
+                POSITIONS.p1[2],
+                POSITIONS.p2[2]
+            ];
+
+            return Promise.resolve(facecards)
+            .mapSeries((facecard) => {
+                return new Promise(function(resolve, reject) {
+                    relocateObjectGlobally(facecard, POSITIONS.deck);
+                    // Card is in position to begin animation, thus show it.
+                    facecard.visible = true;
+
+                    animateObjectMovementTo(
+                        facecard, 
+                        positionsToDeal.pop(),
+                        250,
+                        resolve,
+                        reject
+                    )
+                });
+
+            }) 
+            .delay(150)
+            .then(() => {
+                var ownCard1 = facecards[1];
+                var ownCard2 = facecards[3];
+
+                // Setup actual cards beneath face cards.
+                var myCards = ['jd', 'jh'];
+
+                var cards = _.times(2, () => {
+                    var c = paperObjects.getCard(myCards.pop());
+                    //c.fillColor = 'white'; // Fake this being real card
+                    // Mark as in use
+                    c.pokerhup_state = 'flop-anim';
+                    c.sendToBack();
+                    //c.visible = true;
+                    return c;
+                }); 
+
+                relocateObjectGlobally(cards[0], POSITIONS.p1[1]);    
+                relocateObjectGlobally(cards[1], POSITIONS.p1[2]);
+
+                // Show them (they are under facecards)
+                cards[0].visible = true;    
+                cards[1].visible = true;
+
+                // Hide and release facecards
+                // Refactor this into better method call (freeObject(paperItem))
+                ownCard1.visible = false;
+                ownCard1.pokerhup_state = null;
+
+                ownCard2.visible = false;
+                ownCard2.pokerhup_state = null;
+                // Hide them and release
+                console.warn("Face cards dealt!");
+
+            })    
+
+        },
+
+        // Returns Promise
         playFlop: function() {
             // Get few cards
             var facecard = paperObjects.getFaceCard();
@@ -218,7 +305,7 @@ export default function(pokerCanvas) {
                 //c.fillColor = 'white'; // Fake this being real card
                 // Mark as in use
                 c.pokerhup_state = 'flop-anim';
-                c.visible = true;
+                //c.visible = true;
                 return c;
             });
 
