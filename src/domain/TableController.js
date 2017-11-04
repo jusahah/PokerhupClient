@@ -2,7 +2,7 @@ import _ from 'lodash'
 import Promise from 'bluebird'
 import TWEEN from '@tweenjs/tween.js'
 
-export default function() {
+export default function(pokerCanvas) {
 
     var paperObjects = {
         table: null,
@@ -34,6 +34,34 @@ export default function() {
         }
     }
 
+    // Move to config later
+    var centerCards_FirstX = 0.5;
+    var centerCards_Y = 0.5;
+    var centerCards_Offset = 0.04;
+
+    var POSITIONS = {
+        
+        flop: {
+            1: {x: centerCards_FirstX + centerCards_Offset*0, y: centerCards_Y},
+            2: {x: centerCards_FirstX + centerCards_Offset*1, y: centerCards_Y},
+            3: {x: centerCards_FirstX + centerCards_Offset*2, y: centerCards_Y},
+        },
+        turn: 
+            {x: centerCards_FirstX + centerCards_Offset*3, y: centerCards_Y},
+        river: 
+            {x: centerCards_FirstX + centerCards_Offset*4, y: centerCards_Y},
+
+        // Player cards
+        p1: {
+            1: {x: 0.1, y: 0.6},
+            2: {x: 0.12, y: 0.6},
+        },  
+        p2: {
+            1: {x: 0.9, y: 0.6},
+            2: {x: 0.88, y: 0.6},
+        },           
+    }
+
     // Animation test
     var animateMovementTo = function(facecard, newRelativePosition, resolve, reject) {
 
@@ -41,8 +69,13 @@ export default function() {
         console.warn(newRelativePosition);
         console.warn(facecard);
 
+        var projectPoint = pokerCanvas.translateRelativeToProjectPoint(newRelativePosition);
+
+        console.warn("projectPoint");
+        console.error(projectPoint);
+
         var moveTween = new TWEEN.Tween(facecard.position)
-            .to({x: newRelativePosition.x*600, y: newRelativePosition.y * 500})
+            .to({x: projectPoint.x, y: projectPoint.y})
             .easing(TWEEN.Easing.Quadratic.In)
             .onComplete(function() {
                 resolve();
@@ -62,6 +95,9 @@ export default function() {
         },
         setTable: function(table) {
             paperObjects.table = table;
+        },
+        getTable: function() {
+            return paperObjects.table;
         },
         setTableLayer: function(layer) {
             paperObjects.tableLayer = layer;

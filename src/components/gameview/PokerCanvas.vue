@@ -18,6 +18,13 @@ var tableLayer;
 
 var pokerHupController = null; // Contains whole business side of the app.
 
+var DEF_WIDTH_OF_CANVAS = 1000;
+
+var defWidths = {
+  table: null,
+  card: null
+}
+
 export default {
   name: 'PokerCanvas',
   data () {
@@ -47,10 +54,15 @@ export default {
   beforeDestroy() {
     pokerHupController.onDestroy();
     pokerHupController = null;
+
+    paper.project.clear();
+    paper.project.remove();
   },
   methods: {
 
     onTableLoad(tableSVG) {
+      defWidths.table = tableSVG.bounds.width;
+
       console.log("onTableLoad");
       console.log(paper.view.size);
 
@@ -98,6 +110,28 @@ export default {
 
     },
 
+    // Point translations
+    translateRelativeToProjectPoint: function(relPoint) {
+
+      var tableBounds = pokerHupController.getTable().bounds;
+
+      console.warn("Table bounds");
+      console.log(tableBounds);
+
+      return { 
+        x: tableBounds.x + tableBounds.width * relPoint.x, 
+        y: tableBounds.y + tableBounds.height * relPoint.y 
+      };
+        
+    },
+
+    relativeSize: function(size) {
+        var tableLayer = pokerHupController.getTableLayer();
+        var scaledSize = tableLayer.bounds.width * size;
+
+        return scaledSize;
+    },
+
     createButtonBar: function() {
       var buttonsGroup = new paper.Group({
         name: 'buttonsGroup',
@@ -130,15 +164,37 @@ export default {
       // Create buttons
       return buttonsGroup;
     },
+    setScaling: function() {
+
+
+
+    },
+
+    setOrigScaling: function(paperItem) {
+
+      var currScalingFactor = pokerHupController.getTable().bounds.width / defWidths.table;
+
+      console.log("Curr scaling factor is " + currScalingFactor);
+
+      var currScale = paperItem.getScaling().x;
+
+      paperItem.scale(currScalingFactor / currScale);
+    },
 
     createCards: function() {
 
       // Cards have no group as they need to be able to roam free.
+      var that = this;
 
       return new Promise(function(resolve, reject) {
         paper.project.importSVG('/static/svg/facecard.svg', {
           onLoad: function(facecardSVG) {
             facecardSVG.visible = false;
+            var cardToTable = facecardSVG.bounds.width / defWidths.table;
+            console.log("Face card rel to table: " + cardToTable);
+
+            that.setOrigScaling(facecardSVG);
+
             var facecards = _.times(6, (nth) => {
               var c = facecardSVG.clone();
               c.visible = false; // Hidden by default
