@@ -1,8 +1,9 @@
 import _ from 'lodash'
 import Promise from 'bluebird'
 import TWEEN from '@tweenjs/tween.js'
+import paper from 'paper'
 
-function ObjectRepository(pokerCanvas) {
+function PaperObjectRepository() {
     this.objects = {
         table: null,
         tableLayer: null,
@@ -63,7 +64,31 @@ function ObjectRepository(pokerCanvas) {
 
 export default function(pokerCanvas) {
 
-    var paperObjects = new ObjectRepository(pokerCanvas);   
+    ///////////////// PAPER JS VARS/DEPS /////////////////////////
+    var DEF_WIDTH_OF_CANVAS = 1000;
+
+    var defWidths = {
+      table: null,
+      card: null
+    }
+
+    var ready = false;
+
+    var currentViewSize = {
+        width: 0,
+        height: 0
+    }
+
+    var tableSVGRef;
+    var tableLayer;
+
+    // Object repository is only available from here (TableController)
+    // as it is specific dependency for graphical operations!
+    // Actual business code / poker logic code should not need it ever!
+    var paperObjects = new PaperObjectRepository();   
+
+
+    /////////////// STATE OF THE BOARD /////////////////////////
 
     var state = {
         board: {
@@ -85,6 +110,8 @@ export default function(pokerCanvas) {
         }
     }
 
+    ///////////////// POSITIONS AND CONFIG /////////////////////////
+    
     // Move to config later
     var centerCards_FirstX = 0.375;
     var centerCards_Y = 0.43;
@@ -116,13 +143,14 @@ export default function(pokerCanvas) {
     }
 
     // Animation test
+    // All anims should be moved to AnimationController!
     var animateMovementTo = function(facecard, newRelativePosition, resolve, reject) {
 
         console.warn("animateMovementTo");
         console.warn(newRelativePosition);
         console.warn(facecard);
 
-        var projectPoint = pokerCanvas.translateRelativeToProjectPoint(newRelativePosition);
+        var projectPoint = translateRelativeToProjectPoint(newRelativePosition);
 
         console.warn("projectPoint");
         console.error(projectPoint);
@@ -139,7 +167,7 @@ export default function(pokerCanvas) {
     }
 
     var animateObjectMovementTo = function(paperItem, newRelativePosition, duration, resolve, reject) {
-        var projectPoint = pokerCanvas.translateRelativeToProjectPoint(newRelativePosition);
+        var projectPoint = translateRelativeToProjectPoint(newRelativePosition);
 
         duration = duration || 500;
 
@@ -168,11 +196,276 @@ export default function(pokerCanvas) {
     }
 
     var relocateObjectGlobally = function(paperItem, relPos) {
-        paperItem.position = pokerCanvas.translateRelativeToProjectPoint(relPos);
+        paperItem.position = translateRelativeToProjectPoint(relPos);
+    }
+
+    // Point translations
+    var translateRelativeToProjectPoint = function(relPoint) {
+
+      var tableBounds = paperObjects.getTable().bounds;
+
+      console.warn("Table bounds");
+      console.log(tableBounds);
+
+      return { 
+        x: tableBounds.x + tableBounds.width * relPoint.x, 
+        y: tableBounds.y + tableBounds.height * relPoint.y 
+      };
+        
+    }
+
+    var relativeSize = function(size) {
+        var tableLayer = paperObjects.getTableLayer();
+        var scaledSize = tableLayer.bounds.width * size;
+
+        return scaledSize;
     }
 
 
+    var setScaling = function() {
+
+
+
+    }
+
+    var setOrigScaling = function(paperItem, widthRelativeToTableWidth) {
+
+      widthRelativeToTableWidth = widthRelativeToTableWidth || 1;
+
+      var currScalingFactor = paperObjects.getTable().bounds.width / defWidths.table;
+
+      console.log("Curr scaling factor is " + currScalingFactor);
+
+      var currScale = paperItem.getScaling().x;
+
+      paperItem.scale(currScalingFactor / currScale * widthRelativeToTableWidth);
+    }
+    
+    //////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////// INITIALIZATION CODE FOR TABLE CONTROLLER /////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    var onTableLoad = function(tableSVG) {
+
+      defWidths.table = tableSVG.bounds.width;
+
+
+      console.log("onTableLoad");
+      console.log(paper.view.size);
+
+      tableLayer = new paper.Layer({
+          name: 'tableLayer',
+          children: [tableSVG],
+          position: paper.project.view.center
+      });
+
+      tableLayer.applyMatrix = false;
+      tableLayer.pivot = {x: 0, y: 0};
+      tableLayer.activate();
+
+      paperObjects.setTableLayer(tableLayer);
+      paperObjects.setTable(tableSVG);
+
+      return Promise.resolve()
+      .tap(() => {
+
+          // Rest of setup stuff
+
+          tableSVG.applyMatrix = false;
+
+          //tableSVG.position = new paper.Point(900, 600);
+
+          tableSVG.name = 'tableSVG';
+
+          tableSVG.fitBounds(paper.view.size);
+
+          paper.view.autoUpdate = true;
+
+          paper.view.onResize = _.throttle(onResize, 60);
+          paper.view.onFrame = onFrame;
+
+          ready = true;
+      })
+      .delay(150)
+      .then(() => {
+        // Create buttons
+        return Promise.resolve()
+        .then(createButtonBar)
+        .then((buttons) => {
+            return paperObjects.setButtons(buttons);
+        })
+      })
+      .then(() => {
+        // Create cards
+        return createCards()
+        .then((cards) => {
+            return paperObjects.setCards(cards);
+        })
+      })
+      .then(() => {
+        ready = true;
+      })
+
+
+      
+    }
+
+    var createCards = function() {
+
+      var cardsGroup = new paper.Group({
+        name: 'cardsGroup',
+        position: {x: 0, y: 0}
+      });
+
+      cardsGroup.applyMatrix = false;
+      cardsGroup.pivot = {x: 0, y: 0};
+
+      var cardsContainer = {
+        group: cardsGroup,
+        facecards: null,
+        cards: null
+      }
+
+      return new Promise(function(resolve, reject) {
+        paper.project.importSVG('/static/svg/cards/sface.svg', {
+          onLoad: function(facecardSVG) {
+            facecardSVG.visible = false;
+            var cardToTable = facecardSVG.bounds.width / defWidths.table;
+            console.log("Face card rel to table: " + cardToTable);
+
+            setOrigScaling(facecardSVG, 1.4);
+
+            var facecards = _.times(6, (nth) => {
+              var c = facecardSVG.clone();
+              c.visible = false; // Hidden by default
+              cardsGroup.addChild(c);
+              return c;
+            });
+            // Set facecards
+            cardsContainer.facecards = facecards;
+
+            resolve();          
+          }
+        });
+        
+      })
+      .then(() => {
+        // Load all actual cards
+
+        var ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 't', 'j', 'q', 'k', 'a'];
+        var suits = ['h', 'd', 's', 'c'];
+
+        var cards = [];
+
+        _.each(ranks, (rank) => {
+          _.each(suits, (suit) => {
+            cards.push(rank + "" + suit);
+          });
+        });
+
+        return cards;
+
+
+      })
+      // Load all card svgs individually
+      .map((card) => {
+        return new Promise(function(resolve, reject) {
+          console.log("Loading card " + card);
+          paper.project.importSVG('/static/svg/cards/s' + card + '.svg', {
+            onLoad: function(paperCardItem) {
+              console.log(paperCardItem);
+              console.log("Paper card loaded!")
+              paperCardItem.visible = false;
+              paperCardItem.pokerhup_name = card;
+              setOrigScaling(paperCardItem, 1.4);
+              cardsGroup.addChild(paperCardItem);
+              resolve(paperCardItem);
+            }
+          })
+        });
+      })
+      .then((paperCards) => {
+        console.warn("All cards loaded");
+        cardsContainer.cards = paperCards;
+
+        // Return cardsContainer to original caller of createCards!
+        return cardsContainer;
+
+      })
+      
+
+
+    }
+
+    var createButtonBar = function() {
+      return;
+      var buttonsGroup = new paper.Group({
+        name: 'buttonsGroup',
+        position: {x: 500, y: 0},
+        //bounds: new paper.Rectangle(paper.project.view.bottomLeft, new paper.Size(80, 20)),
+        fillColor: 'blue'
+      });
+
+      paperObjects.getTableLayer().addChild(buttonsGroup);
+
+      buttonsGroup.pivot = {x: 0, y: 0};
+
+      buttonsGroup.applyMatrix = false;
+
+      var point = new paper.Point(200, 20);
+      var size = new paper.Size(60, 60);
+      var path = new paper.Path.Rectangle(point, size);
+      path.strokeColor = 'black';
+      path.name = 'raiseButton'
+
+      buttonsGroup.addChild(path);
+
+      path.position = {x: 0, y: 0};
+
+
+      //buttonsGroup.position = {x: 500, y: 0};
+
+      buttonsGroup.bringToFront();
+
+      // Create buttons
+      return buttonsGroup;
+    }
+
+    var onResize = function(event) {
+
+        console.log("Resize!")
+
+        if (!ready) {
+            return;
+        }
+
+
+        // let's fit field always to bounds
+
+        updateCurrentSize();
+        tableLayer.fitBounds(paper.view.size);
+    }
+
+    var onFrame = function() {
+      //console.log("onFrame");
+      //paper.project.getItem({name: 'buttonsGroup'}).position.y += 1;
+      //paper.project.getItem({name: 'raiseButton'}).position.x += 1;
+
+      TWEEN.update();
+
+    }
+
+    var updateCurrentSize = function() {
+        currentViewSize.width = paper.project.view.element.offsetWidth;
+        currentViewSize.height = paper.project.view.element.offsetHeight;
+
+        console.log(currentViewSize)
+    }
+
     return {
+        /////////// TABLE LOAD HOOK /////////////
+        onTableLoad: onTableLoad,
+
         ////////////////////////////////////////
         /////// INITIALIZATION STUFF ///////////
         ////////////////////////////////////////
@@ -218,8 +511,11 @@ export default function(pokerCanvas) {
         ////////////// USAGE ///////////////////
         ////////////////////////////////////////
 
+
+        //////////// ANIMATIONS ////////////////
+
         // Returns Promise
-        dealHoleCards: function() {
+        dealHoleCards: function(ownHoleCards) {
             // acquire objects needed to animate dealing of hole cards.
             var facecards = _.times(4, () => {
                 var c = paperObjects.getFaceCard();
@@ -260,7 +556,7 @@ export default function(pokerCanvas) {
                 var ownCard2 = facecards[3];
 
                 // Setup actual cards beneath face cards.
-                var myCards = ['jd', 'jh'];
+                var myCards = ownHoleCards;
 
                 var cards = _.times(2, () => {
                     var c = paperObjects.getCard(myCards.pop());
@@ -294,14 +590,12 @@ export default function(pokerCanvas) {
         },
 
         // Returns Promise
-        playFlop: function() {
+        playFlop: function(flopCards) {
             // Get few cards
             var facecard = paperObjects.getFaceCard();
 
-            var testCards = ['3h', 'kd', 'ah'];
-
             var cards = _.times(3, () => {
-                var c = paperObjects.getCard(testCards.pop());
+                var c = paperObjects.getCard(flopCards.pop());
                 //c.fillColor = 'white'; // Fake this being real card
                 // Mark as in use
                 c.pokerhup_state = 'flop-anim';
