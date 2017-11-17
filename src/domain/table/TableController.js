@@ -226,12 +226,15 @@ export default function(pokerCanvas) {
           position: paper.project.view.center
       });
 
+
       tableLayer.applyMatrix = false;
       tableLayer.pivot = {x: 0, y: 0};
       tableLayer.activate();
 
       paperObjects.setTableLayer(tableLayer);
       paperObjects.setTable(tableSVG);
+
+
 
       return Promise.resolve()
       .tap(() => {
@@ -252,6 +255,7 @@ export default function(pokerCanvas) {
           paper.view.onFrame = onFrame;
 
           ready = true;
+          console.warn("Ready set to true")
       })
       .delay(150)
       .then(() => {

@@ -10,11 +10,21 @@ function FakeNetwork(cb) {
 
     // Sketching API
 
+    this.onDestroy = function() {
+        // Release connection etc.
+    }
+
+    this.setMsgGateway = function(cb) {
+        this.cb = cb;
+    }
+
     this.receiveMsg = function(cb) {
         this.cb = cb;
     }
 
     this.sendMsg = function(domainMsg) {
+
+        console.log("Sending msg to network: " + domainMsg.type);
 
         if (!this.nonReactive && this.currentlyWaiting.triggerOn === domainMsg.type) {
 
@@ -43,11 +53,14 @@ function FakeNetwork(cb) {
 
     this.setupCurrentlyWaiting = function(triggerItem) {
 
+        console.log("setupCurrentlyWaiting: Type: " + triggerItem.msgBack.type + ", on: " + triggerItem.triggerOn);
+
         // Send payload to the GameController.
-        this.cb(triggerItem.msgBack);
+
         
         if (!triggerItem.triggerOn) {
             // Auto-triggers right away.
+            this.cb(triggerItem.msgBack);
             _.delay(
                 this.setupCurrentlyWaiting.bind(this, testrun1.shift()), 
                 triggerItem.waitAfterMsgBack || 50
@@ -60,10 +73,12 @@ function FakeNetwork(cb) {
     }
 
     this.initTestRun = function() {
-
+        console.log("TEST RUN: Setting up initial test run");
         this.setupCurrentlyWaiting(testrun1.shift());
 
     }
+
+    _.delay(this.initTestRun.bind(this), 100);
 
 }
 

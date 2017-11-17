@@ -40,12 +40,17 @@ export default {
 
     paper.project.activate();
 
+
     var svg = '/static/svg/table.svg';
 
     // Singletons to form static structure of the app.
     pokerHupTableController = TableControllerCreator(this);
-    pokerHupGameController = new GameController(pokerHupTableController);
-    pokerHupNetwork = new FakeNetwork(pokerHupGameController.serverMessageCb.bind(pokerHupGameController));
+
+    pokerHupNetwork = new FakeNetwork();
+    pokerHupGameController = new GameController(pokerHupTableController, pokerHupNetwork);
+
+    // Connect network to Game controller
+    pokerHupNetwork.setMsgGateway(pokerHupGameController.serverMessageCb.bind(pokerHupGameController));
 
     paper.project.importSVG(svg, {
         onLoad: this.startLoadingPaperStuffIn.bind(this),
@@ -67,6 +72,7 @@ export default {
   methods: {
 
     startLoadingPaperStuffIn(tableSVG) {
+
       return pokerHupTableController.onTableLoad(tableSVG)
       .then(() => {
         // TableController loaded
@@ -80,13 +86,14 @@ export default {
       .then(() => {
         console.log(paper)
       })
-      .delay(100)
-      .then(GameController.readyToPlay.bind(pokerHupGameController));
-      /*
-      .then(pokerHupTableController.dealHoleCards.bind(null, ['ah', 'ad']))
+      .delay(500)
+      .then(pokerHupGameController.readyToPlay.bind(pokerHupGameController))
+      ;
+
+      _ue.then(pokerHupTableController.dealHoleCards.bind(null, ['ah', 'ad']))
       .delay(500)
       .then(pokerHupTableController.playFlop.bind(null, ['3c', 'kc', 'td']));     
-      */ 
+       
       
     },
 

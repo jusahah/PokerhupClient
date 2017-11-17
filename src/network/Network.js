@@ -12,6 +12,10 @@ function Network(cb) {
 
     }
 
+    this.setMsgGateway = function(cb) {
+        this.cb = cb;
+    }
+
 }
 
 export default Network;
