@@ -53,6 +53,10 @@ function PaperObjectRepository() {
         this.objects.buttons = group;
     }
 
+    this.getButtonsGroup = function() {
+        return this.objects.buttons;
+    }
+
     this.setCards = function(cards) {
         this.objects.cards.group = cards.group;
         this.objects.cards.facecards = cards.facecards;
@@ -91,6 +95,8 @@ export default function(pokerCanvas) {
     /////////////// STATE OF THE BOARD /////////////////////////
 
     var state = {
+        decisions: null, // Pending decisions
+        holeCards: [],
         board: {
             // Cards
             cards: {
@@ -369,39 +375,97 @@ export default function(pokerCanvas) {
     }
 
     var createButtonBar = function() {
-      return;
+   
       var buttonsGroup = new paper.Group({
         name: 'buttonsGroup',
-        position: {x: 500, y: 0},
         //bounds: new paper.Rectangle(paper.project.view.bottomLeft, new paper.Size(80, 20)),
         fillColor: 'blue'
       });
+      // Setting position AFTER this will cause new position to be applied to kids (none exist)
+      // and nothing happens. Setting applyMatrix = false causes buttonsGroup to locally stash
+      // its new position, thus allowing kids added later to get correct positioning!
+      buttonsGroup.applyMatrix = false;
 
       paperObjects.getTableLayer().addChild(buttonsGroup);
 
+
       buttonsGroup.pivot = {x: 0, y: 0};
+      
 
-      buttonsGroup.applyMatrix = false;
+      buttonsGroup.position = {
+        x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.25, 
+        y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.8
+      };
 
-      var point = new paper.Point(200, 20);
-      var size = new paper.Size(60, 60);
-      var path = new paper.Path.Rectangle(point, size);
-      path.strokeColor = 'black';
-      path.name = 'raiseButton'
+      var buttons = ['fold', 'check', 'bet', 'raise', 'all-in'];
+      var colors = ['red', 'yellow', 'green', 'purple', 'grey'];
 
-      buttonsGroup.addChild(path);
+      var currI = 0;
+      var MAX_BUTTON_WIDTH = 100;
 
-      path.position = {x: 0, y: 0};
+      _.each(buttons, (buttonName) => {
+          var point = new paper.Point(200, 20);
+          var size = new paper.Size(MAX_BUTTON_WIDTH, 60);
+          var path = new paper.Path.Rectangle(point, size);
+          path.strokeColor = 'black';
+          path.fillColor = colors.shift();
+          path.name = buttonName + "_button";
+
+          buttonsGroup.addChild(path);
+
+          path.position = {x: currI * (MAX_BUTTON_WIDTH+10), y: 0};
+          // Setup event listening
+          path.onClick = function() {
+            console.log(path.name + ' clicked');
+            tableButtonClick(path.name);
+          };
+
+          currI++;
+
+      });
+
 
 
       //buttonsGroup.position = {x: 500, y: 0};
 
       buttonsGroup.bringToFront();
 
+
       // Create buttons
       return buttonsGroup;
     }
 
+
+    ///////////////////////////////////////////////////////////
+    ////////////////// TABLE BUTTON LISTENER //////////////////
+    ///////////////////////////////////////////////////////////
+    var tableButtonClick = function(buttonName) {
+
+        var action = buttonName.split('_')[0];
+
+        if (state.pendingDecisions && state.pendingDecisions.indexOf(action) !== -1) {
+            // Legal action
+            var r = state.pendingDecisionResolver;
+
+            state.pendingDecisions = null;
+            state.pendingDecisionResolver = null;
+
+            r(action);
+
+
+            // Hide buttons
+            hideDecisionButtons();
+        }
+
+    }
+
+    var showDecisionButtons = function() {
+        paperObjects.getButtonsGroup().visible = true;
+    }
+
+    var hideDecisionButtons = function() {
+        paperObjects.getButtonsGroup().visible = false;
+    }
 
     //////////////////////////////////////////////////////////////////////////////
     ////////////////// RUNTIME MANIPULATION AND QUERY OF PAPER ///////////////////
@@ -512,6 +576,9 @@ export default function(pokerCanvas) {
 
         // Returns Promise
         dealHoleCards: function(ownHoleCards) {
+
+            Array.prototype.push.apply(state.holeCards, ownHoleCards);
+
             // acquire objects needed to animate dealing of hole cards.
             var facecards = _.times(4, () => {
                 var c = paperObjects.getFaceCard();
@@ -586,7 +653,11 @@ export default function(pokerCanvas) {
         },
 
         // Returns Promise
-        playFlop: function(flopCards) {
+        dealFlop: function(flopCards) {
+
+            // Setup to board.
+            Array.prototype.push.apply(state.board.cards.flop, flopCards);
+
             // Get few cards
             var facecard = paperObjects.getFaceCard();
 
@@ -710,6 +781,21 @@ export default function(pokerCanvas) {
                 cardsContainer.cards[2].pokerhup_state = 'flop';
 
             })
+
+        },
+        waitingForDecisionBy: function(opponentId) {
+            console.log("TABLE: Waiting decision from " + opponentId);
+
+        },
+        askForDecision: function(decisions) {
+            state.pendingDecisions = decisions;
+
+            showDecisionButtons();
+
+            return new Promise(function(resolve, reject) {
+                state.pendingDecisionResolver = resolve;
+            });
+
 
         }
     }
