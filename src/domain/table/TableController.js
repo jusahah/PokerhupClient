@@ -195,39 +195,6 @@ export default function(pokerCanvas) {
         moveTween.start();            
     }
 
-    var relocateObjectGlobally = function(paperItem, relPos) {
-        paperItem.position = translateRelativeToProjectPoint(relPos);
-    }
-
-    // Point translations
-    var translateRelativeToProjectPoint = function(relPoint) {
-
-      var tableBounds = paperObjects.getTable().bounds;
-
-      console.warn("Table bounds");
-      console.log(tableBounds);
-
-      return { 
-        x: tableBounds.x + tableBounds.width * relPoint.x, 
-        y: tableBounds.y + tableBounds.height * relPoint.y 
-      };
-        
-    }
-
-    var relativeSize = function(size) {
-        var tableLayer = paperObjects.getTableLayer();
-        var scaledSize = tableLayer.bounds.width * size;
-
-        return scaledSize;
-    }
-
-
-    var setScaling = function() {
-
-
-
-    }
-
     var setOrigScaling = function(paperItem, widthRelativeToTableWidth) {
 
       widthRelativeToTableWidth = widthRelativeToTableWidth || 1;
@@ -431,6 +398,37 @@ export default function(pokerCanvas) {
       return buttonsGroup;
     }
 
+
+    //////////////////////////////////////////////////////////////////////////////
+    ////////////////// RUNTIME MANIPULATION AND QUERY OF PAPER ///////////////////
+    //////////////////////////////////////////////////////////////////////////////
+
+    var relocateObjectGlobally = function(paperItem, relPos) {
+        paperItem.position = translateRelativeToProjectPoint(relPos);
+    }
+
+    // Point translations
+    var translateRelativeToProjectPoint = function(relPoint) {
+
+      var tableBounds = paperObjects.getTable().bounds;
+
+      console.warn("Table bounds");
+      console.log(tableBounds);
+
+      return { 
+        x: tableBounds.x + tableBounds.width * relPoint.x, 
+        y: tableBounds.y + tableBounds.height * relPoint.y 
+      };
+        
+    }
+
+    var relativeSize = function(size) {
+        var tableLayer = paperObjects.getTableLayer();
+        var scaledSize = tableLayer.bounds.width * size;
+
+        return scaledSize;
+    }
+
     var onResize = function(event) {
 
         console.log("Resize!")
@@ -466,12 +464,6 @@ export default function(pokerCanvas) {
         /////////// TABLE LOAD HOOK /////////////
         onTableLoad: onTableLoad,
 
-        ////////////////////////////////////////
-        /////// INITIALIZATION STUFF ///////////
-        ////////////////////////////////////////
-        init: function() {
-
-        },
         getRepository: function() {
             return paperObjects;
         },

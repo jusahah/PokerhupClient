@@ -13,8 +13,17 @@ import TWEEN from '@tweenjs/tween.js'
 import paper from 'paper'
 
 import TableControllerCreator from '@/domain/table/TableController';
+import GameController from '@/domain/GameController';
+import Network from '@/network/Network';
 
-var pokerHupTableController = null; // Contains whole business side of the app.
+// Testing deps
+import FakeNetwork from '@/network/FakeNetwork';
+
+// These should be kept outside Vue data reactivity stuff.
+
+var pokerHupTableController = null; // Contains whole graphics side of the app.
+var pokerHupGameController  = null; // Contains whole business logic of the app.
+var pokerHupNetwork         = null; // Provides API to interact with server. 
 
 export default {
   name: 'PokerCanvas',
@@ -24,23 +33,33 @@ export default {
     }
   },
   mounted() {
+    
+    // Refactor: All paper.js stuff moved to TableController.
+
     paper.setup(this.$refs.canvas);
 
     paper.project.activate();
 
     var svg = '/static/svg/table.svg';
 
+    // Singletons to form static structure of the app.
     pokerHupTableController = TableControllerCreator(this);
-
-    pokerHupTableController.init();
+    pokerHupGameController = new GameController(pokerHupTableController);
+    pokerHupNetwork = new FakeNetwork(pokerHupGameController.serverMessageCb.bind(pokerHupGameController));
 
     paper.project.importSVG(svg, {
         onLoad: this.startLoadingPaperStuffIn.bind(this),
     });
   },
   beforeDestroy() {
+    // Destroy deps in reverse order
+    pokerHupNetwork.onDestroy();
+    pokerHupGameController.onDestroy();
     pokerHupTableController.onDestroy();
+
     pokerHupTableController = null;
+    pokerHupGameController = null;
+    pokerHupNetwork = null;
 
     paper.project.clear();
     paper.project.remove();
@@ -62,9 +81,12 @@ export default {
         console.log(paper)
       })
       .delay(100)
+      .then(GameController.readyToPlay.bind(pokerHupGameController));
+      /*
       .then(pokerHupTableController.dealHoleCards.bind(null, ['ah', 'ad']))
       .delay(500)
-      .then(pokerHupTableController.playFlop.bind(null, ['3c', 'kc', 'td']));      
+      .then(pokerHupTableController.playFlop.bind(null, ['3c', 'kc', 'td']));     
+      */ 
       
     },
 
