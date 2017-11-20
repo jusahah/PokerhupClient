@@ -25,6 +25,11 @@ var pokerHupTableController = null; // Contains whole graphics side of the app.
 var pokerHupGameController  = null; // Contains whole business logic of the app.
 var pokerHupNetwork         = null; // Provides API to interact with server. 
 
+// Setup bluebird Promise cancellation as active
+Promise.config({
+  cancellation: true
+});
+
 export default {
   name: 'PokerCanvas',
   data () {
@@ -39,7 +44,6 @@ export default {
     paper.setup(this.$refs.canvas);
 
     paper.project.activate();
-
 
     var svg = '/static/svg/table.svg';
 
@@ -70,7 +74,26 @@ export default {
     paper.project.remove();
   },
   methods: {
+    createTestRect() {
 
+      // Create Group that holds all objects for our Christmas tree.
+      var xmasTree = new paper.Group({});
+      xmasTree.applyMatrix = false;
+      xmasTree.position = {x: 100, y: 0}
+      // Create tree 
+      var tree = new paper.Path.Rectangle(
+        // Rectangle top-left point
+        new paper.Point(0, 0),
+        // Tree trunks size
+        new paper.Size(20, 20)
+      );
+      tree.fillColor = 'green';
+
+      xmasTree.addChild(tree);
+
+      // Whats the global position of tree?
+
+    },
     startLoadingPaperStuffIn(tableSVG) {
 
       return pokerHupTableController.onTableLoad(tableSVG)
@@ -87,13 +110,13 @@ export default {
         console.log(paper)
       })
       .delay(500)
-      .then(pokerHupGameController.readyToPlay.bind(pokerHupGameController))
-      ;
+      .then(pokerHupGameController.readyToPlay.bind(pokerHupGameController));
 
+      /*
       _ue.then(pokerHupTableController.dealHoleCards.bind(null, ['ah', 'ad']))
       .delay(500)
       .then(pokerHupTableController.playFlop.bind(null, ['3c', 'kc', 'td']));     
-       
+       */
       
     },
 

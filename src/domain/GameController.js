@@ -1,3 +1,12 @@
+// Game states
+import WaitingNextHand from '@/domain/fsm/WaitingNextHand';
+import StartingNextHand from '@/domain/fsm/StartingNextHand';
+import WaitingGameStart from '@/domain/fsm/WaitingGameStart';
+
+// Hand states
+import WaitingMyDecision from '@/domain/fsm/hand/WaitingMyDecision';
+import WaitingOpponentDecision from '@/domain/fsm/hand/WaitingOpponentDecision';
+import Animating from '@/domain/fsm/hand/Animating'
 
 function GameController(tableController, network) {
     
@@ -11,9 +20,15 @@ function GameController(tableController, network) {
 
     // Current app state tree.
     this._stateTree = null;
+    // Current state
+    this.currentState = null;
 
     // Current action promise that is being fulfilled by Table
     this.currentTablePromise = null;
+    // Current waiting action ID
+    // This is auto-inc int that tells whether some 
+    // waited action has already been pre-empted/cancelled.
+    this.currentTablePromiseId = 0;
 
     /// INITIALIZATION STUFF
     this.readyToPlay = function() {
@@ -37,6 +52,13 @@ function GameController(tableController, network) {
 
         console.warn("From server: " + msgFromServer.type);
 
+        ///////////////////////////////////////
+        /////////// HAND SYNC /////////////////
+        ///////////////////////////////////////
+        if (msgFromServer.type === 'hand_init') {
+            this.changeLocalState(new StartingNextHand(msgFromServer.world));
+        }
+
         //////////////////////////////////////
         /////////// Table updates ////////////
         //////////////////////////////////////
@@ -46,11 +68,14 @@ function GameController(tableController, network) {
             // Get own cards
             var myCards = msgFromServer.cards[this.myPlayerId];
 
+            this.changeLocalState(new Animating('preflop_deal', myCards));
+
             // Call TableController
-            this.tableController.dealHoleCards(myCards);
+            // this.tableController.dealHoleCards(myCards);
 
         } else if (msgFromServer.type === 'hand_flop_deal') {
-            this.tableController.dealFlop(msgFromServer.hand.commonCards);
+            this.changeLocalState(new Animating('flop_deal', msgFromServer.hand.commonCards));
+            //this.tableController.dealFlop(msgFromServer.hand.commonCards);
         }
 
         ///////////////////////////////////
@@ -61,10 +86,10 @@ function GameController(tableController, network) {
 
             if (msgFromServer.toDecide === this.myPlayerId) {
                 // My decision
-                this.waitMyDecision(msgFromServer.decisions)
+                this.changeLocalState(new WaitingMyDecision(msgFromServer.decisions));
             } else {
                 // Somebody else's decision
-                this.waitOpponentDecision(msgFromServer.toDecide);
+                this.changeLocalState(new WaitingOpponentDecision(msgFromServer.toDecide));
             }
         }
 
@@ -77,31 +102,27 @@ function GameController(tableController, network) {
 
     }
 
+    /*
     this.waitOpponentDecision = function(opponentId) {
 
         this.tableController.waitingForDecisionBy(opponentId);
 
     }
+    */
 
-    this.waitMyDecision = function(decisionsAvailable) {
-        
-        this.currentTablePromise = this.tableController.askForDecision(decisionsAvailable);
+    ///////////////////////// STATE CHANGES //////////////////////////
+    
+    this.changeLocalState = function(state) {
+        if (this.currentState) {
+            this.currentState.exit();
+            console.error("Exited state: " + this.currentState.constructor.name);
+        }
 
-        this.currentTablePromise.then((decisionMade) => {
-            console.warn("GameController: Decision is " + decisionMade);
-            // Send straight back to server.
-            this.network.sendMsg({
-                type: 'hand_decision_made',
-                decision: decisionMade
-            });
+        this.currentState = state;
+        this.currentState.setupDeps(this, this.tableController, this.network);
 
-            this.currentTablePromise = null;
-
-        })
-        // Do timeout clause here?
-        .catch((e) => {
-            throw e; // Rethrow.
-        })
+        this.currentState.enter();
+        console.error("Entered state: " + this.currentState.constructor.name);
 
     }
 

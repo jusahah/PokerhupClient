@@ -22,6 +22,10 @@ function PaperObjectRepository() {
         })
     }
 
+    this.getFaceCards = function() {
+      return this.objects.cards.facecards;
+    }
+
     this.getCard = function(cardName) {
         // For now we return facecard.
         //return this.getFaceCard();
@@ -93,9 +97,14 @@ export default function(pokerCanvas) {
 
 
     /////////////// STATE OF THE BOARD /////////////////////////
+    var systemState = {
+      pendingDecisions: null, // Pending decisions
+      pendingDecisionResolver: null,
+      pendingAnimationResolver: null,
+    }
 
+    // This should only contain state that can be serialized to JSON!!
     var state = {
-        decisions: null, // Pending decisions
         holeCards: [],
         board: {
             // Cards
@@ -125,6 +134,10 @@ export default function(pokerCanvas) {
 
     var POSITIONS = {
         // Static positions
+        staticDeck: {
+          first: {x: 0.64, y: 0.15},
+          second: {x: 0.645, y: 0.15}
+        },
         deck: {x: 0.65, y: 0.15},
         
         flop: {
@@ -198,7 +211,83 @@ export default function(pokerCanvas) {
                 resolve(paperItem); // For chaining
             });
 
-        moveTween.start();            
+        moveTween.start();
+
+        return moveTween;            
+    }
+
+    var shuffleDeck = function() {
+
+      console.warn("SHUFFLE DECK");
+
+      // Precondition: All back cards should be at deck position and visible
+      var facecards = paperObjects.getFaceCards();
+
+      _.each(facecards, (facecard) => {
+        relocateObjectGlobally(facecard, POSITIONS.deck);
+        facecard.visible = true;
+      });
+
+      return Promise.resolve(facecards)
+      .map((facecard) => {
+          return Promise.resolve([1,1,1,1])
+          .mapSeries(() => {
+            return new Promise(function(resolve, reject, onCancel) {
+                var moveTween = animateObjectMovementTo(
+                    facecard, 
+                    {
+                      x: POSITIONS.deck.x + (0.05 - Math.random()*0.1), 
+                      y: POSITIONS.deck.y + (0.02 - Math.random()*0.04)
+                    },
+                    Math.random()*80 + 60,
+                    resolve,
+                    reject
+                );
+
+                onCancel(() => {
+                  console.warn("Cancelling moveTween")
+                  moveTween.stop();
+                });
+            })
+            .then((facecard) => {
+              // Move back to deck position
+              return new Promise(function(resolve, reject, onCancel) {
+                  var moveTween = animateObjectMovementTo(
+                      facecard, 
+                      POSITIONS.deck,
+                      Math.random()*60 + 60,
+                      resolve,
+                      reject
+                  )
+
+
+                  onCancel(() => {
+                    console.warn("Cancelling moveTween")
+                    moveTween.stop();
+                  });
+              })
+            })
+
+          })
+
+      })
+      .then(() => {
+        console.warn("Deck shuffled");
+      }) 
+
+    }
+
+    var forceAllFaceCardsToDeckPosition = function() {
+      var facecards = paperObjects.getFaceCards();
+
+      _.each(facecards, (facecard) => {
+        relocateObjectGlobally(facecard, POSITIONS.deck);
+        facecard.visible = false;
+      });      
+
+      // Enough for only one to be visible.
+      facecards[0].bringToFront();
+      facecards[0].visible = true;
     }
 
     var setOrigScaling = function(paperItem, widthRelativeToTableWidth) {
@@ -218,8 +307,11 @@ export default function(pokerCanvas) {
     /////////////////////////// INITIALIZATION CODE FOR TABLE CONTROLLER /////////////////////
     //////////////////////////////////////////////////////////////////////////////////////////
 
+
+
     var onTableLoad = function(tableSVG) {
 
+      
       defWidths.table = tableSVG.bounds.width;
 
 
@@ -239,6 +331,7 @@ export default function(pokerCanvas) {
 
       paperObjects.setTableLayer(tableLayer);
       paperObjects.setTable(tableSVG);
+
 
 
 
@@ -443,12 +536,12 @@ export default function(pokerCanvas) {
 
         var action = buttonName.split('_')[0];
 
-        if (state.pendingDecisions && state.pendingDecisions.indexOf(action) !== -1) {
+        if (systemState.pendingDecisions && systemState.pendingDecisions.indexOf(action) !== -1) {
             // Legal action
-            var r = state.pendingDecisionResolver;
+            var r = systemState.pendingDecisionResolver;
 
-            state.pendingDecisions = null;
-            state.pendingDecisionResolver = null;
+            systemState.pendingDecisions = null;
+            systemState.pendingDecisionResolver = null;
 
             r(action);
 
@@ -571,6 +664,11 @@ export default function(pokerCanvas) {
         ////////////// USAGE ///////////////////
         ////////////////////////////////////////
 
+        /////////// FULL SYNC WITH SERVER //////////
+        sync: function(gameState) {
+          console.log("Syncing tableController with server state")
+        },
+
 
         //////////// ANIMATIONS ////////////////
 
@@ -580,14 +678,19 @@ export default function(pokerCanvas) {
             Array.prototype.push.apply(state.holeCards, ownHoleCards);
 
             // acquire objects needed to animate dealing of hole cards.
-            var facecards = _.times(4, () => {
+            var facecards = _.times(5, () => {
                 var c = paperObjects.getFaceCard();
                 //c.fillColor = 'white'; // Fake this being real card
                 // Mark as in use
                 c.pokerhup_state = 'preflop-anim';
                 //c.visible = true;
                 return c;
-            });       
+            });    
+
+            var staticDeckCard = facecards.pop();
+            relocateObjectGlobally(staticDeckCard, POSITIONS.deck);
+            staticDeckCard.visible = true;  
+            staticDeckCard.sendToBack();           
 
             var positionsToDeal = [
                 POSITIONS.p1[1],
@@ -597,6 +700,7 @@ export default function(pokerCanvas) {
             ];
 
             return Promise.resolve(facecards)
+            .delay(250)
             .mapSeries((facecard) => {
                 return new Promise(function(resolve, reject) {
                     relocateObjectGlobally(facecard, POSITIONS.deck);
@@ -788,15 +892,18 @@ export default function(pokerCanvas) {
 
         },
         askForDecision: function(decisions) {
-            state.pendingDecisions = decisions;
+            systemState.pendingDecisions = decisions;
 
             showDecisionButtons();
 
             return new Promise(function(resolve, reject) {
-                state.pendingDecisionResolver = resolve;
+                systemState.pendingDecisionResolver = resolve;
             });
+        },
+        hideDecisionButtons: hideDecisionButtons,
 
+        shuffleDeck: shuffleDeck,
+        forceAllFaceCardsToDeckPosition: forceAllFaceCardsToDeckPosition,
 
-        }
     }
 };

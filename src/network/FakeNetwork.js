@@ -92,8 +92,10 @@ var testrun1 = [
                 blinds: {p1: 10, p2: 5}
             }
         },
-        waitBeforeMsgBack: 500
-    },
+        waitBeforeMsgBack: 500,
+        waitAfterMsgBack: 2000
+    },  
+    
     {
         triggerOn: null, // Auto-trigger after prev done
         msgBack: {
@@ -115,6 +117,7 @@ var testrun1 = [
         },
         waitAfterMsgBack: 1500, // For animation to play
     },
+    
     {
         triggerOn: null, // Auto-trigger after prev done
         msgBack: {
@@ -184,6 +187,7 @@ var testrun1 = [
         },
         waitAfterMsgBack: 200,
     },  
+    
 ];
 
 export default FakeNetwork;
