@@ -552,8 +552,23 @@ export default function(pokerCanvas) {
 
     }
 
-    var showDecisionButtons = function() {
+    var showDecisionButtons = function(decisionsAvailable) {
+      
+        console.warn("DECISIONS AVAILABLE")
+        console.warn(decisionsAvailable);
+
         paperObjects.getButtonsGroup().visible = true;
+
+        _.each(paperObjects.getButtonsGroup().children, (btn) => {
+          var decisionName = btn.name.split("_")[0];
+
+          if (decisionsAvailable.indexOf(decisionName) === -1) {
+            btn.opacity = 0.3;
+          } else {
+            btn.opacity = 1;
+          }
+
+        });
     }
 
     var hideDecisionButtons = function() {
@@ -894,7 +909,7 @@ export default function(pokerCanvas) {
         askForDecision: function(decisions) {
             systemState.pendingDecisions = decisions;
 
-            showDecisionButtons();
+            showDecisionButtons(decisions);
 
             return new Promise(function(resolve, reject) {
                 systemState.pendingDecisionResolver = resolve;

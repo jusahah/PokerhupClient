@@ -40,6 +40,8 @@ function GameController(tableController, network) {
 
         this.network.sendMsg(msg);
 
+        this.tableController.hideDecisionButtons();
+
     }
 
     // DESTRUCTION STUFF

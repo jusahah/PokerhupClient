@@ -93,7 +93,7 @@ var testrun1 = [
             }
         },
         waitBeforeMsgBack: 500,
-        waitAfterMsgBack: 2000
+        waitAfterMsgBack: 1500
     },  
     
     {
