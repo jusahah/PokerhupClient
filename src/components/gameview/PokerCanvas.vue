@@ -1,6 +1,7 @@
 <template>
   <div style="width: 100%; height: 80%; margin-top: 50px;">
     <canvas ref="canvas" resize></canvas>
+    <button @click="connectToServer">Connect</button>
   </div>
 </template>
 
@@ -50,7 +51,7 @@ export default {
     // Singletons to form static structure of the app.
     pokerHupTableController = TableControllerCreator(this);
 
-    pokerHupNetwork = new FakeNetwork();
+    pokerHupNetwork = new Network();
     pokerHupGameController = new GameController(pokerHupTableController, pokerHupNetwork);
 
     // Connect network to Game controller
@@ -74,6 +75,10 @@ export default {
     paper.project.remove();
   },
   methods: {
+    connectToServer() {
+      console.log("Connecting to server");
+      pokerHupNetwork.connect();
+    },
     createTestRect() {
 
       // Create Group that holds all objects for our Christmas tree.
