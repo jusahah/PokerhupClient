@@ -1,7 +1,7 @@
 <template>
   <div style="width: 100%; height: 80%; margin-top: 50px;">
     <canvas ref="canvas" resize></canvas>
-    <button @click="connectToServer">Connect</button>
+    <button @click="connectToServer" style="position: fixed; top: 0; left: 0;">Connect</button>
   </div>
 </template>
 

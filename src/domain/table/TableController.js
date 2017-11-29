@@ -165,14 +165,11 @@ export default function(pokerCanvas) {
     // All anims should be moved to AnimationController!
     var animateMovementTo = function(facecard, newRelativePosition, resolve, reject) {
 
-        console.warn("animateMovementTo");
-        console.warn(newRelativePosition);
-        console.warn(facecard);
+
 
         var projectPoint = translateRelativeToProjectPoint(newRelativePosition);
 
-        console.warn("projectPoint");
-        console.error(projectPoint);
+
 
         var moveTween = new TWEEN.Tween(facecard.position)
             .to({x: projectPoint.x, y: projectPoint.y}, 200)
@@ -189,11 +186,6 @@ export default function(pokerCanvas) {
         var projectPoint = translateRelativeToProjectPoint(newRelativePosition);
 
         duration = duration || 500;
-
-        console.error("animateObjectMovementTo");
-        console.log(paperItem.position);
-        console.log(newRelativePosition);
-        console.log(projectPoint)
 
 
         var moveTween = new TWEEN.Tween(paperItem.position)
@@ -422,7 +414,7 @@ export default function(pokerCanvas) {
       .then(() => {
         // Load all actual cards
 
-        var ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 't', 'j', 'q', 'k', 'a'];
+        var ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
         var suits = ['h', 'd', 's', 'c'];
 
         var cards = [];
@@ -588,8 +580,8 @@ export default function(pokerCanvas) {
 
       var tableBounds = paperObjects.getTable().bounds;
 
-      console.warn("Table bounds");
-      console.log(tableBounds);
+      //console.warn("Table bounds");
+      //console.log(tableBounds);
 
       return { 
         x: tableBounds.x + tableBounds.width * relPoint.x, 
@@ -684,11 +676,19 @@ export default function(pokerCanvas) {
           console.log("Syncing tableController with server state")
         },
 
+        updateBetsOnTable: function(betsByPlayer) {
+          console.log("Updating bets on table");
+          console.log(betsByPlayer);
+        },
+
 
         //////////// ANIMATIONS ////////////////
 
         // Returns Promise
         dealHoleCards: function(ownHoleCards) {
+
+          console.error("Own hole cards");
+          console.log(ownHoleCards);
 
             Array.prototype.push.apply(state.holeCards, ownHoleCards);
 
@@ -789,8 +789,8 @@ export default function(pokerCanvas) {
                 return c;
             });
 
-            console.log("Cards to use");
-            console.error(cards);
+            //console.log("Cards to use");
+            //console.error(cards);
 
 
 
