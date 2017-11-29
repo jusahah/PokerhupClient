@@ -55,6 +55,12 @@ function GameController(tableController, network) {
         console.warn("From server: " + msgType);
         console.warn(msgFromServer);
 
+        if (msgType === 'opponent_disconnected') {
+            this.network.disconnect();
+            alert('Opponent disconnected - Game is over');
+
+        }
+
         if (msgType === 'settings_init') {
             this.myPlayerId = msgFromServer.playerNumber;
         }
@@ -62,13 +68,23 @@ function GameController(tableController, network) {
         ///////////////////////////////////////
         /////////// HAND SYNC /////////////////
         ///////////////////////////////////////
+
+        if (msgType === 'stacks_bets_pot_update') {
+            console.log("Updating stacks, bets and pot");
+            this.tableController.updateStacks(msgFromServer.stacks);
+            this.tableController.updateBets(msgFromServer.bets);
+            this.tableController.updatePot(msgFromServer.pot);
+
+        }
+
         if (msgType === 'hand_init') {
             this.changeLocalState(new StartingNextHand(msgFromServer.world));
         }
 
         if (msgType === 'hand_ended') {
             var newStacks = msgFromServer.stacks;
-            this.changeLocalState(new Animating('hand_end', newStacks));
+            this.tableController.freeUpAllCards();
+            this.changeLocalState(new WaitingNextHand());
         }
 
         //////////////////////////////////////

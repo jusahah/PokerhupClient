@@ -26,6 +26,13 @@ function Network(cb) {
         console.warn("Client disconnected from server!");
     }
 
+    this.disconnect = function() {
+
+        if (this.socket) {
+            this.socket.disconnect();
+        }
+    }
+
     this.receiveSettings = function(settings) {
 
         // Clear settings receiver afterwards.

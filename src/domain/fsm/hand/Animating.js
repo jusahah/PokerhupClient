@@ -19,10 +19,10 @@ Animating.prototype.startAnimation = function() {
 
     if (this.animName === 'flop_deal') {
         return this.tableController.dealFlop(this.animData);
-    } else if (this.animName === 'turn') {
-        return this.tableController.dealTurn();
-    } else if (this.animName === 'river') {
-        return this.tableController.dealRiver();
+    } else if (this.animName === 'turn_deal') {
+        return this.tableController.dealTurn(this.animData[3]);
+    } else if (this.animName === 'river_deal') {
+        return this.tableController.dealRiver(this.animData[4]);
     }
 
     // Hole cards

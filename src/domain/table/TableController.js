@@ -8,6 +8,7 @@ function PaperObjectRepository() {
         table: null,
         tableLayer: null,
         buttons: null,
+        tableTexts: null,
         cards: {
             group: null,
             facecards: [],
@@ -35,6 +36,10 @@ function PaperObjectRepository() {
         })
     }
 
+    this.getAllCards = function() {
+      return _.concat(this.objects.cards.facecards, this.objects.cards.cards);
+    }
+
     this.setTable = function(table) {
         this.objects.table = table;
     }
@@ -51,6 +56,32 @@ function PaperObjectRepository() {
         }
 
         return this.objects.tableLayer;
+    }
+
+    this.setTableTexts = function(group) {
+      this.objects.tableTexts = group;
+    }
+
+    this.getStackTexts = function() {
+      return {
+        p1: this.objects.tableTexts.getItem({name: 'p1Stack'}),
+        p2: this.objects.tableTexts.getItem({name: 'p2Stack'})
+      }
+    }
+
+    this.getBetsTexts = function() {
+      return {
+        p1: this.objects.tableTexts.getItem({name: 'p1Bets'}),
+        p2: this.objects.tableTexts.getItem({name: 'p2Bets'})
+      }
+    }
+
+    this.getPotText = function() {
+      return this.objects.tableTexts.getItem({name: 'pot'});
+    }
+
+    this.getTableTexts = function() {
+      return this.objects.tableTexts;
     }
 
     this.setButtons = function(group) {
@@ -139,6 +170,10 @@ export default function(pokerCanvas) {
           second: {x: 0.645, y: 0.15}
         },
         deck: {x: 0.65, y: 0.15},
+        potText: {
+          x: 0.48,
+          y: 0.55
+        },
         
         flop: {
             1: {x: centerCards_FirstX + centerCards_OffsetX*0, y: centerCards_Y},
@@ -150,14 +185,21 @@ export default function(pokerCanvas) {
         river: 
             {x: centerCards_FirstX + centerCards_OffsetX*4, y: centerCards_Y},
 
-        // Player cards
         p1: {
+            // Player cards
             1: {x: 0.1, y: 0.6},
             2: {x: 0.142, y: 0.6},
+            // Stack text
+            stackText: {x: 0.08, y: 0.65},
+            betsText: {x: 0.26, y: 0.6}
         },  
         p2: {
+            // Player cards
             1: {x: 0.9, y: 0.6},
             2: {x: 0.858, y: 0.6},
+            // Stack text
+            stackText: {x: 0.88, y: 0.65},
+            betsText: {x: 0.7, y: 0.6}
         },           
     }
 
@@ -358,6 +400,14 @@ export default function(pokerCanvas) {
         })
       })
       .then(() => {
+        // Create table texts (stack etc.)
+        return Promise.resolve()
+        .then(createTableTexts)
+        .then((textsGroup) => {
+            return paperObjects.setTableTexts(textsGroup);
+        })
+      })      
+      .then(() => {
         // Create cards
         return createCards()
         .then((cards) => {
@@ -459,6 +509,102 @@ export default function(pokerCanvas) {
 
     }
 
+    var createTableTexts = function() {
+      var tableTextsGroup = new paper.Group({
+        name: 'tableTextsGroup'
+      });
+
+      tableTextsGroup.applyMatrix = false;
+
+      tableTextsGroup.pivot = {x: 0, y: 0};
+      tableTextsGroup.position = {x: 0, y: 0};
+
+      paperObjects.getTableLayer().addChild(tableTextsGroup);
+
+      // P1 stack
+      var stack1 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p1.stackText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p1.stackText.y
+          },
+          content: '---',
+          fillColor: 'black',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 16,
+          name: 'p1Stack'
+      });
+
+      // P2 stack
+      var stack2 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p2.stackText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p2.stackText.y
+          },
+          content: '---',
+          fillColor: 'black',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 16,
+          name: 'p2Stack'
+      });
+
+      // P1 Bets
+      var bets1 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p1.betsText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p1.betsText.y
+          },
+          content: '---',
+          fillColor: 'black',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 16,
+          name: 'p1Bets'
+      });
+
+      // P2 Bets
+      var bets2 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p2.betsText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p2.betsText.y
+          },
+          content: '---',
+          fillColor: 'black',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 16,
+          name: 'p2Bets'
+      });
+
+      // Pot
+      var pot = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.potText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.potText.y
+          },
+          content: '---',
+          fillColor: 'black',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 16,
+          name: 'pot'
+      });
+
+      tableTextsGroup.addChild(stack1);
+      tableTextsGroup.addChild(stack2);
+      tableTextsGroup.addChild(bets1);
+      tableTextsGroup.addChild(bets2);
+      tableTextsGroup.addChild(pot);
+
+      tableTextsGroup.visible = true;
+      tableTextsGroup.bringToFront();
+
+      return tableTextsGroup;
+
+
+    }
+
     var createButtonBar = function() {
    
       var buttonsGroup = new paper.Group({
@@ -470,6 +616,7 @@ export default function(pokerCanvas) {
       // and nothing happens. Setting applyMatrix = false causes buttonsGroup to locally stash
       // its new position, thus allowing kids added later to get correct positioning!
       buttonsGroup.applyMatrix = false;
+      buttonsGroup.visible = false;
 
       paperObjects.getTableLayer().addChild(buttonsGroup);
 
@@ -478,32 +625,58 @@ export default function(pokerCanvas) {
       
 
       buttonsGroup.position = {
-        x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.25, 
-        y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.8
+        x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.10, 
+        y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.75
       };
 
-      var buttons = ['fold', 'check', 'bet', 'raise', 'all-in'];
-      var colors = ['red', 'yellow', 'green', 'purple', 'grey'];
+      var buttons = ['fold', 'check', 'call', 'bet', 'raise', 'all-in'];
+      var colors = ['red', 'yellow', 'orange', 'green', 'purple', 'grey'];
 
       var currI = 0;
       var MAX_BUTTON_WIDTH = 100;
 
       _.each(buttons, (buttonName) => {
-          var point = new paper.Point(200, 20);
+          // Note! We need Group. Can not simply addChild to PathItem.
+          var buttonWrapper = new paper.Group({});
+          buttonWrapper.name = buttonName + "_button";
+
+          var point = new paper.Point(0, 0);
           var size = new paper.Size(MAX_BUTTON_WIDTH, 60);
           var path = new paper.Path.Rectangle(point, size);
+
+          buttonWrapper.addChild(path);
+
           path.strokeColor = 'black';
           path.fillColor = colors.shift();
           path.name = buttonName + "_button";
+          //path.pivot = {x: 0, y: 0};
 
-          buttonsGroup.addChild(path);
+          var text = new paper.PointText({
+              point: [0, 0],
+              content: buttonName,
+              fillColor: 'black',
+              fontFamily: 'Courier New',
+              fontWeight: 'bold',
+              fontSize: 20
+          });
 
-          path.position = {x: currI * (MAX_BUTTON_WIDTH+10), y: 0};
+          buttonWrapper.addChild(text);
+
+          path.position = {x: 0, y: 0};
+          text.position = {x: 0, y: 0};
+
+          path.bringToFront();
+          text.bringToFront();
+
+          buttonsGroup.addChild(buttonWrapper);
+          buttonWrapper.position = {x: currI * (MAX_BUTTON_WIDTH+10), y: 0};
+
           // Setup event listening
-          path.onClick = function() {
+          buttonWrapper.onClick = function() {
             console.log(path.name + ' clicked');
             tableButtonClick(path.name);
           };
+
 
           currI++;
 
@@ -545,6 +718,14 @@ export default function(pokerCanvas) {
     }
 
     var showDecisionButtons = function(decisionsAvailable) {
+
+      /*
+        [
+          {action: 'check', data: null},
+          {action: 'bet', data: {minBet: ..., maxBet: ...}},
+          {...}
+        ]
+      */
       
         console.warn("DECISIONS AVAILABLE")
         console.warn(decisionsAvailable);
@@ -628,9 +809,53 @@ export default function(pokerCanvas) {
         console.log(currentViewSize)
     }
 
+    var freeCard = function(card) {
+      card.pokerhup_state = null;
+      card.visible = false;
+    }
+
     return {
         /////////// TABLE LOAD HOOK /////////////
         onTableLoad: onTableLoad,
+
+        updateStacks: function(stacks) {
+          var texts = paperObjects.getStackTexts();
+          
+          if (stacks) {
+            texts.p1.content = stacks.p1;
+            texts.p2.content = stacks.p2;
+            texts.p1.visible = true;
+            texts.p2.visible = true;
+          } else if (stacks === 0) {
+            // Hide
+            texts.p1.visible = false;
+            texts.p2.visible = false;
+          }
+
+        },
+        updateBets: function(bets) {
+          var texts = paperObjects.getBetsTexts();
+          
+          if (bets) {
+            texts.p1.content = bets.p1;
+            texts.p2.content = bets.p2;
+            texts.p1.visible = true;
+            texts.p2.visible = true;
+          } else if (bets === 0) {
+            texts.p1.visible = false;
+            texts.p2.visible = false;
+          }
+        },
+        updatePot: function(pot) {
+          var text = paperObjects.getPotText();
+
+          if (pot) {
+            text.content = pot;
+            text.visible = true;
+          } else if(pot === 0) {
+            text.visible = false;
+          }
+        },
 
         getRepository: function() {
             return paperObjects;
@@ -902,11 +1127,118 @@ export default function(pokerCanvas) {
             })
 
         },
+
+        dealTurn: function(turnCard) {
+            // Setup to board.
+            state.board.cards.turn = turnCard;
+
+            // Get few cards
+            var facecard = paperObjects.getFaceCard();
+
+            var card = paperObjects.getCard(turnCard);
+            card.pokerhup_state = 'turn-anim';
+
+
+            var nthFlopCardNext = 0;
+
+            // Setup facecard to Deck position.
+            relocateObjectGlobally(facecard, POSITIONS.deck);
+            // Show card
+            facecard.visible = true;
+
+            return Promise.resolve({facecard: facecard, card: card})
+            .tap((cardsContainer) => {
+                // Move to Flop 1st position.
+                return new Promise(function(resolve, reject) {
+                    animateObjectMovementTo(cardsContainer.facecard, POSITIONS.turn, 170, resolve, reject);
+                });                
+            })
+            .tap((cardsContainer) => {
+                // Facecard is now in position. Move turn card below it, and set it visible.
+              
+                relocateObjectGlobally(cardsContainer.card, POSITIONS.turn);
+           
+                cardsContainer.card.sendToBack();
+
+                // ensure facecard on top
+                cardsContainer.facecard.bringToFront();
+                // Show our real card
+                cardsContainer.card.visible = true;
+                cardsContainer.card.pokerhup_state = 'turn';
+                // Lastly, hide and free facecard.
+                cardsContainer.facecard.visible = false;
+                cardsContainer.facecard.pokerhup_state = null; // Freed                
+               
+
+              
+
+            });
+        },
+
+        dealRiver: function(riverCard) {
+            // Setup to board.
+            state.board.cards.river = riverCard;
+
+            // Get few cards
+            var facecard = paperObjects.getFaceCard();
+
+            var card = paperObjects.getCard(riverCard);
+            card.pokerhup_state = 'river-anim';
+
+            // Setup facecard to Deck position.
+            relocateObjectGlobally(facecard, POSITIONS.deck);
+            // Show card
+            facecard.visible = true;
+
+            return Promise.resolve({facecard: facecard, card: card})
+            .tap((cardsContainer) => {
+                // Move to Flop 1st position.
+                return new Promise(function(resolve, reject) {
+                    animateObjectMovementTo(cardsContainer.facecard, POSITIONS.river, 170, resolve, reject);
+                });                
+            })
+            .tap((cardsContainer) => {
+                // Facecard is now in position. Move river card below it, and set it visible.
+              
+                relocateObjectGlobally(cardsContainer.card, POSITIONS.river);
+           
+                cardsContainer.card.sendToBack();
+
+                // ensure facecard on top
+                cardsContainer.facecard.bringToFront();
+                // Show our real card
+                cardsContainer.card.visible = true;
+                cardsContainer.card.pokerhup_state = 'river';
+                // Lastly, hide and free facecard.
+                cardsContainer.facecard.visible = false;
+                cardsContainer.facecard.pokerhup_state = null; // Freed                
+               
+            });
+        },
+
+        freeUpAllCards: function() {
+
+          console.log("Freeing all cards");
+
+          _.each(paperObjects.getAllCards(), (c) => {
+            freeCard(c);
+          })
+
+          state.board.cards.flop.length = 0;
+          state.board.cards.turn = null;
+          state.board.cards.river = null;
+          
+
+        },
+
         waitingForDecisionBy: function(opponentId) {
             console.log("TABLE: Waiting decision from " + opponentId);
 
         },
         askForDecision: function(decisions) {
+            // Change to non-object format (to an array of only decision string)
+            var decisions = _.map(decisions, (d) => {return d.action});
+
             systemState.pendingDecisions = decisions;
 
             showDecisionButtons(decisions);
