@@ -3,7 +3,7 @@ import State from '@/domain/fsm/State';
 // Exceptions
 import StateAlreadyDead from '@/domain/exceptions/StateAlreadyDead'
 
-function WaitingMyDecision(currentBetsOnTable, decisionsAvailable, answerResolver) {
+function WaitingMyDecision(currentBetsOnTable, decisionsAvailable, timeToDecide, answerResolver) {
     State.call(this);
 
     // whether while we've been waiting rest of the app already moved on
@@ -16,6 +16,10 @@ function WaitingMyDecision(currentBetsOnTable, decisionsAvailable, answerResolve
 
     this.decisionsAvailable = decisionsAvailable;
     this.currentBetsOnTable = currentBetsOnTable;
+
+    this.timeToDecide = timeToDecide;
+    this.timerInterval = null;
+    this.timerStarted = 0;
 }
 
 
@@ -31,6 +35,24 @@ WaitingMyDecision.prototype.enter = function() {
     State.prototype.enter.call(this);
 
     // Setup UI
+    /*
+    this.timerStarted = Date.now();
+
+    this.timerInterval = setInterval(function() {
+        var timeLeft = this.timeToDecide - (Date.now() - this.timerStarted);
+        console.log("Decision timer runs: " + timeLeft);
+        if (timeLeft < 0) {
+            timeLeft = 0;
+
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+        }
+        this.tableController.updateDecisionTimer(timeLeft);
+    }.bind(this), 100);
+    */
+
     this.tableController.updateBetsOnTable(this.currentBetsOnTable);
     this.decisionPromise = this.tableController.askForDecision(this.decisionsAvailable);
 
@@ -66,6 +88,10 @@ WaitingMyDecision.prototype.exit = function() {
 
     State.prototype.exit.call(this);
 
+    if (this.timerInterval) {
+        clearInterval(this.timerInterval);
+        this.timerInterval = null;
+    }
     // Clear UI
     this.tableController.hideDecisionButtons();
 

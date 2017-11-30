@@ -97,7 +97,7 @@ function GameController(tableController, network) {
             this.tableController.setButton(msgFromServer.button);
             this.tableController.updateActionText('p1', '');
             this.tableController.updateActionText('p2', '');
-            
+
             this.changeLocalState(new StartingNextHand(/*msgFromServer.world*/));
         }
 
@@ -177,6 +177,7 @@ function GameController(tableController, network) {
             this.changeLocalState(new WaitingMyDecision(
                 msgFromServer.bets, 
                 msgFromServer.decisions, 
+                msgFromServer.time,
                 answerResolver
             ));
         }

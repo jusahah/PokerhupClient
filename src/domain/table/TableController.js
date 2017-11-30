@@ -212,7 +212,7 @@ export default function(pokerCanvas) {
             // Stack text
             buttonChip: {x: 0.24, y: 0.56},
             actionText: {x: 0.08, y: 0.5},
-            stackText: {x: 0.08, y: 0.64},
+            stackText: {x: 0.08, y: 0.69},
             betsText: {x: 0.26, y: 0.6}
         },  
         p2: {
@@ -221,8 +221,8 @@ export default function(pokerCanvas) {
             2: {x: 0.858, y: 0.6},
             // Stack text
             buttonChip: {x: 0.72, y: 0.56},
-            actionText: {x: 0.88, y: 0.5},
-            stackText: {x: 0.88, y: 0.64},
+            actionText: {x: 0.86, y: 0.5},
+            stackText: {x: 0.88, y: 0.69},
             betsText: {x: 0.7, y: 0.6}
         },           
     }
@@ -460,12 +460,14 @@ export default function(pokerCanvas) {
       var path = new paper.Path.Circle({
           center: [80, 50],
           radius: 10,
-          strokeWidth: 4,
+          strokeWidth: 2,
           strokeColor: 'grey',
           fillColor: 'white'
       });
 
       path.visible = false;
+
+      setOrigScaling(path, 0.4);
 
       return path;
     }
@@ -575,7 +577,7 @@ export default function(pokerCanvas) {
             x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p1.stackText.x, 
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p1.stackText.y
           },
-          content: '---',
+          content: '',
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
@@ -589,7 +591,7 @@ export default function(pokerCanvas) {
             x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p2.stackText.x, 
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p2.stackText.y
           },
-          content: '---',
+          content: '',
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
@@ -603,7 +605,7 @@ export default function(pokerCanvas) {
             x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p1.betsText.x, 
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p1.betsText.y
           },
-          content: '---',
+          content: '',
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
@@ -617,7 +619,7 @@ export default function(pokerCanvas) {
             x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p2.betsText.x, 
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p2.betsText.y
           },
-          content: '---',
+          content: '',
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
@@ -659,13 +661,29 @@ export default function(pokerCanvas) {
             x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.potText.x, 
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.potText.y
           },
-          content: '---',
+          content: '',
           fillColor: 'purple',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
           fontSize: 24,
           name: 'pot'
       });
+
+      setOrigScaling(stack1, 0.4);
+      setOrigScaling(stack2, 0.4);
+      setOrigScaling(bets1, 0.4);
+      setOrigScaling(bets2, 0.4);
+      setOrigScaling(action1, 0.4);
+      setOrigScaling(action2, 0.4);
+      setOrigScaling(pot, 0.4);
+
+      relocateObjectGlobally(stack1, POSITIONS.p1.stackText);
+      relocateObjectGlobally(stack2, POSITIONS.p2.stackText);
+      relocateObjectGlobally(bets1, POSITIONS.p1.betsText);
+      relocateObjectGlobally(bets2, POSITIONS.p2.betsText);
+      relocateObjectGlobally(action1, POSITIONS.p1.actionText);
+      relocateObjectGlobally(action2, POSITIONS.p2.actionText);
+      relocateObjectGlobally(pot, POSITIONS.potText);
 
       tableTextsGroup.addChild(stack1);
       tableTextsGroup.addChild(stack2);
@@ -699,13 +717,17 @@ export default function(pokerCanvas) {
       paperObjects.getTableLayer().addChild(buttonsGroup);
 
 
-      buttonsGroup.pivot = {x: 0, y: 0};
+      //buttonsGroup.pivot = {x: 0, y: 0};
       
-
+      /*
       buttonsGroup.position = {
-        x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.10, 
-        y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.75
+        x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.11, 
+        y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.77
       };
+      */
+      setOrigScaling(buttonsGroup, 0.26);
+
+      relocateObjectGlobally(buttonsGroup, {x: 0.22, y: 0.85});
 
       var buttons = ['fold', 'check', 'call', 'bet', 'raise', 'all-in'];
       var colors = ['red', 'yellow', 'orange', 'green', 'purple', 'grey'];
@@ -738,6 +760,7 @@ export default function(pokerCanvas) {
               fontSize: 20
           });
 
+
           buttonWrapper.addChild(text);
 
           path.position = {x: 0, y: 0};
@@ -747,6 +770,13 @@ export default function(pokerCanvas) {
           text.bringToFront();
 
           buttonsGroup.addChild(buttonWrapper);
+          //setOrigScaling(buttonWrapper, 0.3);
+          /*
+          relocateObjectGlobally(buttonWrapper, {
+            x: currI*0.11,
+            y: 0.1
+          });
+          */
           buttonWrapper.position = {x: currI * (MAX_BUTTON_WIDTH+10), y: 0};
 
           // Setup event listening
@@ -980,6 +1010,10 @@ export default function(pokerCanvas) {
           h1.bringToFront();
           h2.bringToFront();
           
+        },
+
+        updateDecisionTimer: function(newTimeLeft) {
+
         },
 
         foldHand: function(playerNumberWhoFolded) {
