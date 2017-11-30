@@ -1,7 +1,7 @@
 <template>
   <div style="width: 100%; height: 80%; margin-top: 50px;">
     <canvas ref="canvas" resize></canvas>
-    <button @click="connectToServer" style="position: fixed; top: 0; left: 0;">Connect</button>
+    <button v-if="!connected" @click="connectToServer" style="position: fixed; top: 0; left: 0;">Connect</button>
   </div>
 </template>
 
@@ -35,6 +35,7 @@ export default {
   name: 'PokerCanvas',
   data () {
     return {
+      connected: false,
       ready: false
     }
   },
@@ -78,6 +79,8 @@ export default {
     connectToServer() {
       console.log("Connecting to server");
       pokerHupNetwork.connect();
+      this.connected = true;
+
     },
     createTestRect() {
 

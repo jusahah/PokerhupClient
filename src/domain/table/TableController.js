@@ -266,7 +266,9 @@ export default function(pokerCanvas) {
             })
             */
             .onComplete(function() {
+              if (resolve) {   
                 resolve(paperItem); // For chaining
+              }
             });
 
         moveTween.start();
@@ -888,14 +890,17 @@ export default function(pokerCanvas) {
     var freeCard = function(card) {
       card.pokerhup_state = null;
       card.visible = false;
+      card.opacity = 1;
     }
 
-    var updateActionText = function(playerNumber, newText) {
+    var updateActionText = function(playerNumber, newText, noReset) {
 
       var actionTexts = paperObjects.getActionTexts();
       // Reset always first
-      actionTexts.p1.content = '';
-      actionTexts.p2.content = '';
+      if (!noReset) {
+        actionTexts.p1.content = '';
+        actionTexts.p2.content = '';    
+      }
 
       actionTexts[playerNumber].content = newText;
 
@@ -951,6 +956,30 @@ export default function(pokerCanvas) {
         setMyPlayerId: function(_myPlayerId) {
           console.warn("My player id is " + _myPlayerId);
           myPlayerId = _myPlayerId;
+        },
+
+        showDown: function(holeCards) {
+          console.warn("SHOW DOWN");
+          console.warn(holeCards);
+
+          var p1Hole = holeCards.p1;
+          var p2Hole = holeCards.p2;
+
+          var opponentId = myPlayerId === 'p1' ? 'p2' : 'p1';
+
+          // Get cards depicting opponents hand.
+          var h1 = paperObjects.getCard(holeCards[opponentId][0]);
+          var h2 = paperObjects.getCard(holeCards[opponentId][1]);
+
+          relocateObjectGlobally(h1, POSITIONS[opponentId][1]);
+          relocateObjectGlobally(h2, POSITIONS[opponentId][2]);
+
+          h1.visible = true;
+          h2.visible = true;
+
+          h1.bringToFront();
+          h2.bringToFront();
+          
         },
 
         foldHand: function(playerNumberWhoFolded) {
@@ -1058,7 +1087,14 @@ export default function(pokerCanvas) {
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS[playerNumber].buttonChip.y
           };
 
-          button.position = newPos;
+          animateObjectMovementTo(
+              button, 
+
+              POSITIONS[playerNumber].buttonChip,
+              500,
+              null,
+              null
+          )
           // Ensure visible
           button.visible = true;
         },

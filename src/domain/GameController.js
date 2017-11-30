@@ -95,7 +95,25 @@ function GameController(tableController, network) {
 
         if (msgType === 'hand_init') {
             this.tableController.setButton(msgFromServer.button);
+            this.tableController.updateActionText('p1', '');
+            this.tableController.updateActionText('p2', '');
+            
             this.changeLocalState(new StartingNextHand(/*msgFromServer.world*/));
+        }
+
+        if (msgType === 'hand_showdown') {
+            this.tableController.showDown(msgFromServer.cards);
+        }
+
+        if (msgType === 'hand_showdown_values') {
+            this.tableController.updateActionText('p1', msgFromServer.p1);
+            this.tableController.updateActionText('p2', msgFromServer.p2, true);
+        }
+
+        if (msgType === 'hand_showdown_gather_winnings') {
+            this.tableController.updateStacks(msgFromServer.stacks);
+            this.tableController.updateBets(0);
+            this.tableController.updatePot(0);
         }
 
         if (msgType === 'hand_decision_made') {
@@ -108,6 +126,7 @@ function GameController(tableController, network) {
 
         if (msgType === 'hand_ended') {
             var newStacks = msgFromServer.stacks;
+
             this.tableController.freeUpAllCards();
             this.changeLocalState(new WaitingNextHand());
         }
