@@ -30,6 +30,8 @@ function GameController(tableController, network) {
     // waited action has already been pre-empted/cancelled.
     this.currentTablePromiseId = 0;
 
+    this.gameHasEnded = false;
+
     /// INITIALIZATION STUFF
     this.readyToPlay = function() {
 
@@ -57,12 +59,26 @@ function GameController(tableController, network) {
 
         if (msgType === 'opponent_disconnected') {
             this.network.disconnect();
-            alert('Opponent disconnected - Game is over');
+            if (!this.gameHasEnded) {
+                // Irregural disconnect, alert user.
+                alert('Opponent disconnected - Game is over');
+                
+            }
 
         }
 
         if (msgType === 'settings_init') {
             this.myPlayerId = msgFromServer.playerNumber;
+            this.tableController.setMyPlayerId(this.myPlayerId);
+        }
+
+        if (msgType === 'game_ended') {
+            this.gameHasEnded = true;
+            console.error("Game ended msg");
+            console.log(msgFromServer);
+            var winnerId = msgFromServer.winner;
+
+            this.tableController.showResult(winnerId);
         }
 
         ///////////////////////////////////////
@@ -78,7 +94,16 @@ function GameController(tableController, network) {
         }
 
         if (msgType === 'hand_init') {
-            this.changeLocalState(new StartingNextHand(msgFromServer.world));
+            this.tableController.setButton(msgFromServer.button);
+            this.changeLocalState(new StartingNextHand(/*msgFromServer.world*/));
+        }
+
+        if (msgType === 'hand_decision_made') {
+            this.tableController.updateActionText(msgFromServer.decider, msgFromServer.decision);
+        }
+
+        if (msgType === 'hand_folded') {
+            this.tableController.foldHand(msgFromServer.folder);
         }
 
         if (msgType === 'hand_ended') {

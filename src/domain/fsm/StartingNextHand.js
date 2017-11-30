@@ -1,10 +1,9 @@
 import State from '@/domain/fsm/State';
 
-function StartingNextHand(gameState) {
+function StartingNextHand(/*gameState*/) {
     State.call(this);
 
     // Full current game state to sync UI with
-    this.gameState = gameState;
 }
 
 StartingNextHand.prototype = Object.create(State.prototype);
@@ -17,7 +16,7 @@ StartingNextHand.prototype.enter = function() {
     // Code here
     console.log("StartingNextHand enter")
     // Do full refresh of UI to match provided game state
-    this.tableController.sync(this.gameState);
+    //this.tableController.sync(this.gameState);
 
     this.pendingTableOperation = this.tableController.shuffleDeck()
     .then(() => {

@@ -9,6 +9,7 @@ function PaperObjectRepository() {
         tableLayer: null,
         buttons: null,
         tableTexts: null,
+        buttonChip: null,
         cards: {
             group: null,
             facecards: [],
@@ -38,6 +39,14 @@ function PaperObjectRepository() {
 
     this.getAllCards = function() {
       return _.concat(this.objects.cards.facecards, this.objects.cards.cards);
+    }
+
+    this.setButtonChip = function(button) {
+      this.objects.buttonChip = button;
+    }
+
+    this.getButtonChip = function() {
+      return this.objects.buttonChip;
     }
 
     this.setTable = function(table) {
@@ -78,6 +87,13 @@ function PaperObjectRepository() {
 
     this.getPotText = function() {
       return this.objects.tableTexts.getItem({name: 'pot'});
+    }
+
+    this.getActionTexts = function() {
+      return {
+        p1: this.objects.tableTexts.getItem({name: 'p1Action'}),
+        p2: this.objects.tableTexts.getItem({name: 'p2Action'})
+      }      
     }
 
     this.getTableTexts = function() {
@@ -126,6 +142,8 @@ export default function(pokerCanvas) {
     // Actual business code / poker logic code should not need it ever!
     var paperObjects = new PaperObjectRepository();   
 
+    var actionTextRemover = null;
+
 
     /////////////// STATE OF THE BOARD /////////////////////////
     var systemState = {
@@ -133,6 +151,8 @@ export default function(pokerCanvas) {
       pendingDecisionResolver: null,
       pendingAnimationResolver: null,
     }
+
+    var myPlayerId;
 
     // This should only contain state that can be serialized to JSON!!
     var state = {
@@ -171,8 +191,8 @@ export default function(pokerCanvas) {
         },
         deck: {x: 0.65, y: 0.15},
         potText: {
-          x: 0.48,
-          y: 0.55
+          x: 0.47,
+          y: 0.53
         },
         
         flop: {
@@ -190,7 +210,9 @@ export default function(pokerCanvas) {
             1: {x: 0.1, y: 0.6},
             2: {x: 0.142, y: 0.6},
             // Stack text
-            stackText: {x: 0.08, y: 0.65},
+            buttonChip: {x: 0.24, y: 0.56},
+            actionText: {x: 0.08, y: 0.5},
+            stackText: {x: 0.08, y: 0.64},
             betsText: {x: 0.26, y: 0.6}
         },  
         p2: {
@@ -198,7 +220,9 @@ export default function(pokerCanvas) {
             1: {x: 0.9, y: 0.6},
             2: {x: 0.858, y: 0.6},
             // Stack text
-            stackText: {x: 0.88, y: 0.65},
+            buttonChip: {x: 0.72, y: 0.56},
+            actionText: {x: 0.88, y: 0.5},
+            stackText: {x: 0.88, y: 0.64},
             betsText: {x: 0.7, y: 0.6}
         },           
     }
@@ -392,6 +416,14 @@ export default function(pokerCanvas) {
       })
       .delay(150)
       .then(() => {
+        // Create button chip
+        return Promise.resolve()
+        .then(createButtonChip)
+        .then((chip) => {
+            return paperObjects.setButtonChip(chip);
+        })
+      })      
+      .then(() => {
         // Create buttons
         return Promise.resolve()
         .then(createButtonBar)
@@ -420,6 +452,20 @@ export default function(pokerCanvas) {
 
 
       
+    }
+
+    var createButtonChip = function() {
+      var path = new paper.Path.Circle({
+          center: [80, 50],
+          radius: 10,
+          strokeWidth: 4,
+          strokeColor: 'grey',
+          fillColor: 'white'
+      });
+
+      path.visible = false;
+
+      return path;
     }
 
     var createCards = function() {
@@ -559,7 +605,7 @@ export default function(pokerCanvas) {
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
-          fontSize: 16,
+          fontSize: 20,
           name: 'p1Bets'
       });
 
@@ -573,8 +619,36 @@ export default function(pokerCanvas) {
           fillColor: 'black',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
-          fontSize: 16,
+          fontSize: 20,
           name: 'p2Bets'
+      });
+
+      // P1 Actions
+      var action1 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p1.actionText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p1.actionText.y
+          },
+          content: '',
+          fillColor: 'yellow',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 18,
+          name: 'p1Action'
+      });
+
+      // P2 Actions
+      var action2 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS.p2.actionText.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.p2.actionText.y
+          },
+          content: '',
+          fillColor: 'yellow',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 18,
+          name: 'p2Action'
       });
 
       // Pot
@@ -584,10 +658,10 @@ export default function(pokerCanvas) {
             y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS.potText.y
           },
           content: '---',
-          fillColor: 'black',
+          fillColor: 'purple',
           fontFamily: 'Courier New',
           fontWeight: 'bold',
-          fontSize: 16,
+          fontSize: 24,
           name: 'pot'
       });
 
@@ -595,6 +669,8 @@ export default function(pokerCanvas) {
       tableTextsGroup.addChild(stack2);
       tableTextsGroup.addChild(bets1);
       tableTextsGroup.addChild(bets2);
+      tableTextsGroup.addChild(action1);
+      tableTextsGroup.addChild(action2);
       tableTextsGroup.addChild(pot);
 
       tableTextsGroup.visible = true;
@@ -814,10 +890,74 @@ export default function(pokerCanvas) {
       card.visible = false;
     }
 
+    var updateActionText = function(playerNumber, newText) {
+
+      var actionTexts = paperObjects.getActionTexts();
+      // Reset always first
+      actionTexts.p1.content = '';
+      actionTexts.p2.content = '';
+
+      actionTexts[playerNumber].content = newText;
+
+      if (actionTextRemover) {
+        clearTimeout(actionTextRemover);
+        actionTextRemover = null;
+      }
+
+      actionTextRemover = setTimeout(function() {
+        actionTexts[playerNumber].content = '';
+      }, 1500);
+
+    }
+
+    var showWonText = function() {
+      tableLayer.clear();
+
+      var action2 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.35, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.4
+          },
+          content: 'You won!',
+          fillColor: 'green',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 38,
+      });
+
+    }
+
+    var showLostText = function() {
+      tableLayer.clear();
+
+      var action2 = new paper.PointText({
+          point: {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*0.35, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*0.4
+          },
+          content: 'You lost!',
+          fillColor: 'white',
+          fontFamily: 'Courier New',
+          fontWeight: 'bold',
+          fontSize: 38,
+      });
+
+    }
+
     return {
         /////////// TABLE LOAD HOOK /////////////
         onTableLoad: onTableLoad,
 
+        setMyPlayerId: function(_myPlayerId) {
+          console.warn("My player id is " + _myPlayerId);
+          myPlayerId = _myPlayerId;
+        },
+
+        foldHand: function(playerNumberWhoFolded) {
+          
+          updateActionText(playerNumberWhoFolded, 'Fold')
+        },
+        updateActionText: updateActionText,
         updateStacks: function(stacks) {
           var texts = paperObjects.getStackTexts();
           
@@ -890,11 +1030,38 @@ export default function(pokerCanvas) {
         onDestroy: function() {
             console.log("TableController onDestroy")
 
+            if (actionTextRemover) {
+              clearTimeout(actionTextRemover);
+              actionTextRemover = null;
+            }
+
         },
 
         ////////////////////////////////////////
         ////////////// USAGE ///////////////////
         ////////////////////////////////////////
+
+        showResult: function(winnerId) {
+          if (winnerId === myPlayerId) {
+            showWonText();
+          } else {
+            showLostText();
+          }
+        },
+
+        setButton: function(playerNumber) {
+          //alert("Setting button to " + playerNumber);
+
+          var button = paperObjects.getButtonChip();
+          var newPos = {
+            x: paper.project.view.bounds.x + paper.project.view.bounds.width*POSITIONS[playerNumber].buttonChip.x, 
+            y: paper.project.view.bounds.y + paper.project.view.bounds.height*POSITIONS[playerNumber].buttonChip.y
+          };
+
+          button.position = newPos;
+          // Ensure visible
+          button.visible = true;
+        },
 
         /////////// FULL SYNC WITH SERVER //////////
         sync: function(gameState) {
@@ -959,8 +1126,16 @@ export default function(pokerCanvas) {
             }) 
             .delay(150)
             .then(() => {
-                var ownCard1 = facecards[1];
-                var ownCard2 = facecards[3];
+
+                if (myPlayerId === 'p1') {
+                  var ownCard1 = facecards[1];
+                  var ownCard2 = facecards[3];
+                  
+                } else {
+                  var ownCard1 = facecards[0];
+                  var ownCard2 = facecards[2];
+                  
+                }
 
                 // Setup actual cards beneath face cards.
                 var myCards = ownHoleCards;
@@ -975,8 +1150,8 @@ export default function(pokerCanvas) {
                     return c;
                 }); 
 
-                relocateObjectGlobally(cards[0], POSITIONS.p1[1]);    
-                relocateObjectGlobally(cards[1], POSITIONS.p1[2]);
+                relocateObjectGlobally(cards[0], myPlayerId === 'p1' ? POSITIONS.p1[1] : POSITIONS.p2[1]);    
+                relocateObjectGlobally(cards[1], myPlayerId === 'p1' ? POSITIONS.p1[2] : POSITIONS.p2[2]);
 
                 // Show them (they are under facecards)
                 cards[0].visible = true;    
