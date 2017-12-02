@@ -14,7 +14,9 @@ function Network(cb) {
 
     this.connect = function() {
         // Move connection address and port to env var later
-        this.socket = io('http://localhost:8070');
+        console.log("Connecting to server in Network")
+        console.log('Connecting: http://' + process.env.SERVER_ADDR + ':8070');
+        this.socket = io('http://' + process.env.SERVER_ADDR + ':8070');
         console.warn("Connected to server");
 
         this.socket.on('settings', this.receiveSettings.bind(this));
