@@ -2,6 +2,7 @@
   <div style="width: 100%; height: 80%; margin-top: 50px;">
     <canvas ref="canvas" resize></canvas>
     <button v-if="!connected" @click="connectToServer" style="position: fixed; top: 0; left: 0;">Connect</button>
+    <p v-else style="position: fixed; top: 4px; left: 4px;">Welcome to pokerhup-server. Version is {{serverVersion}}</p>
   </div>
 </template>
 
@@ -35,6 +36,7 @@ export default {
   name: 'PokerCanvas',
   data () {
     return {
+      serverVersion: '???',
       connected: false,
       ready: false
     }
@@ -52,7 +54,10 @@ export default {
     // Singletons to form static structure of the app.
     pokerHupTableController = TableControllerCreator(this);
 
-    pokerHupNetwork = new Network();
+    pokerHupNetwork = new Network(function(serverVersion) {
+      this.serverVersion = serverVersion;
+    }.bind(this));
+
     pokerHupGameController = new GameController(pokerHupTableController, pokerHupNetwork);
 
     // Connect network to Game controller

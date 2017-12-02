@@ -59,7 +59,7 @@ WaitingMyDecision.prototype.enter = function() {
     this.decisionPromise
     .tap(this.checkStateStillAlive.bind(this))
     .then(function(decisionMade) {
-        console.warn("WaitingMyDecision: Decision is " + decisionMade.decision);
+        console.warn("WaitingMyDecision: Decision is " + decisionMade.decision + ", bet amount: " + decisionMade.betAmount);
         // Send straight back to server.
         /*
         this.network.sendMsg({

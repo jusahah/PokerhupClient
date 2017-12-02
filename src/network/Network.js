@@ -1,9 +1,10 @@
 import io from 'socket.io-client';
 import Promise from 'bluebird';
 
-function Network(cb) {
+function Network(welcomeCb) {
 
-    this.cb = cb;
+    this.welcomeCb = welcomeCb;
+    this.cb = null;
     this.socket = null;
 
     this.settings = null;
@@ -18,10 +19,21 @@ function Network(cb) {
         console.log('Connecting: http://' + process.env.SERVER_ADDR + ':8070');
         this.socket = io('http://' + process.env.SERVER_ADDR + ':8070');
         console.warn("Connected to server");
-
+        this.socket.on('welcome', this.receiveWelcome.bind(this));
         this.socket.on('settings', this.receiveSettings.bind(this));
         this.socket.on('msg', this.receiveMsgFromServer.bind(this));
         this.socket.on('disconnect', this.disconnected.bind(this));
+    }
+
+    this.receiveWelcome = function(welcomeMsg) {
+        var serverVersion = welcomeMsg.serverVersion;
+
+        this.welcomeCb(serverVersion);
+
+        // Reset after
+        this.welcomeCb = null;
+
+
     }
 
     this.disconnected = function() {

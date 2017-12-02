@@ -104,6 +104,10 @@ function PaperObjectRepository() {
         this.objects.buttons = group;
     }
 
+    this.getBetButtonText = function() {
+      return this.objects.buttons.getItem({name: 'bet_button_text'});
+    }
+
     this.getButtonsGroup = function() {
         return this.objects.buttons;
     }
@@ -153,6 +157,7 @@ export default function(pokerCanvas) {
     }
 
     var myPlayerId;
+    var currentBet = 20;
 
     // This should only contain state that can be serialized to JSON!!
     var state = {
@@ -745,29 +750,74 @@ export default function(pokerCanvas) {
           var path = new paper.Path.Rectangle(point, size);
 
           buttonWrapper.addChild(path);
+          buttonWrapper.pivot = {x: 0, y: 0};
 
           path.strokeColor = 'black';
           path.fillColor = colors.shift();
-          path.name = buttonName + "_button";
+          path.name = buttonName + "_button2";
           //path.pivot = {x: 0, y: 0};
+
+          var buttonNameText = buttonName === 'bet' ? (buttonName + ' 20') : buttonName;
 
           var text = new paper.PointText({
               point: [0, 0],
-              content: buttonName,
+              content: buttonNameText,
               fillColor: 'black',
               fontFamily: 'Courier New',
               fontWeight: 'bold',
-              fontSize: 20
+              fontSize: 20,
+              name: buttonName + '_button_text'
           });
 
-
           buttonWrapper.addChild(text);
-
           path.position = {x: 0, y: 0};
           text.position = {x: 0, y: 0};
 
           path.bringToFront();
           text.bringToFront();
+
+          if (buttonName === 'bet') {
+            var plusText = new paper.PointText({
+                point: [30, 30],
+                content: 'In',
+                fillColor: 'black',
+                fontFamily: 'Courier New',
+                fontWeight: 'bold',
+                fontSize: 20
+            });  
+
+            var minusText = new paper.PointText({
+                point: [60, 30],
+                content: 'De',
+                fillColor: 'black',
+                fontFamily: 'Courier New',
+                fontWeight: 'bold',
+                fontSize: 20
+            }); 
+
+            plusText.onClick = function(e) {
+              e.stopPropagation();
+              tableButtonClick(path.name, 'plus');
+            }
+
+            minusText.onClick = function(e) {
+              e.stopPropagation();
+              tableButtonClick(path.name, 'minus');
+            }
+
+            buttonWrapper.addChild(plusText);
+            buttonWrapper.addChild(minusText);
+
+            plusText.position = {x: -20, y: 50};
+            minusText.position = {x: 20, y: 50};
+
+            plusText.bringToFront();
+            minusText.bringToFront();
+
+          }
+
+
+
 
           buttonsGroup.addChild(buttonWrapper);
           //setOrigScaling(buttonWrapper, 0.3);
@@ -801,13 +851,45 @@ export default function(pokerCanvas) {
       return buttonsGroup;
     }
 
+    var showCurrentBet = function() {
+      console.warn("Showing current bet: " + currentBet);
+      var betButton = paperObjects.getBetButtonText();
+      console.log(betButton)
+      betButton.content = 'bet ' + currentBet;
+
+
+    }
+
 
     ///////////////////////////////////////////////////////////
     ////////////////// TABLE BUTTON LISTENER //////////////////
     ///////////////////////////////////////////////////////////
-    var tableButtonClick = function(buttonName) {
+    var tableButtonClick = function(buttonName, extraName) {
+
+      console.warn(buttonName + ", " + extraName);
+
 
         var action = buttonName.split('_')[0];
+
+        if (extraName === 'plus') {
+          // Inc bet amount
+          currentBet += 20;
+          showCurrentBet();
+          console.log("Bet amount inc:" + currentBet)
+          return;
+        }
+
+        if (extraName === 'minus') {
+          // Inc bet amount
+          currentBet -= 20;
+          if (currentBet < 20) {
+            currentBet = 20;
+          }
+          showCurrentBet();
+
+          console.log("Bet amount dec:" + currentBet)
+          return;
+        }
 
         if (systemState.pendingDecisions && systemState.pendingDecisions.indexOf(action) !== -1) {
             // Legal action
@@ -816,8 +898,10 @@ export default function(pokerCanvas) {
             systemState.pendingDecisions = null;
             systemState.pendingDecisionResolver = null;
 
-            r(action);
+            r({decision: action, betAmount: currentBet});
 
+            currentBet = 20; // Reset
+            showCurrentBet();
 
             // Hide buttons
             hideDecisionButtons();
@@ -854,6 +938,8 @@ export default function(pokerCanvas) {
 
     var hideDecisionButtons = function() {
         paperObjects.getButtonsGroup().visible = false;
+        currentBet = 20;
+        showCurrentBet();
     }
 
     //////////////////////////////////////////////////////////////////////////////
