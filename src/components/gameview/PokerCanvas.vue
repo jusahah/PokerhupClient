@@ -3,6 +3,7 @@
     <canvas ref="canvas" resize></canvas>
     <button v-if="!connected" @click="connectToServer" style="position: fixed; top: 0; left: 0;">Connect</button>
     <p v-else style="position: fixed; top: 4px; left: 4px;">Welcome to pokerhup-server. Version is {{serverVersion}}</p>
+    <button v-on:click="showHandDebugHistory" style="position: fixed; top: 0; right: 0;">Debug hands</button>
   </div>
 </template>
 
@@ -86,6 +87,28 @@ export default {
       pokerHupNetwork.connect();
       this.connected = true;
 
+    },
+    showHandDebugHistory() {
+      var handHistory = pokerHupGameController.getHandDebugHistory();
+      if (!handHistory) {
+        console.warn("No hand debug history");
+        return;
+      }
+      console.log("----- HAND DEBUG HISTORY ----");
+      console.log(handHistory);
+
+      if (handHistory.length === 0) {
+        return;
+      }
+
+      console.log("---- LAST HAND ----");
+      var lastHand = handHistory[handHistory.length-1];
+      console.log("Common cards");
+      console.log(lastHand.handState.communityCards);
+      console.log("Hole cards");
+      console.log("P1: " + lastHand.handState.holeCards.p1[0] + "," + lastHand.handState.holeCards.p1[1]);
+      console.log("P2: " + lastHand.handState.holeCards.p2[0] + "," + lastHand.handState.holeCards.p2[1]);      
+      
     },
     createTestRect() {
 

@@ -32,6 +32,8 @@ function GameController(tableController, network) {
 
     this.gameHasEnded = false;
 
+    this.handDebugHistory = null;
+
     /// INITIALIZATION STUFF
     this.readyToPlay = function() {
 
@@ -51,6 +53,10 @@ function GameController(tableController, network) {
 
     }
 
+    this.getHandDebugHistory = function() {
+        return this.handDebugHistory;
+    }
+
     /// SERVER MESSAGE GATEWAY
     this.serverMessageCb = function(msgType, msgFromServer, answerResolver) {
 
@@ -65,6 +71,12 @@ function GameController(tableController, network) {
                 
             }
 
+        }
+
+        if (msgType === 'hand_debug_history') {
+            console.error("HAND DEBUG HISTORY");
+            console.log(msgFromServer.history);
+            this.handDebugHistory = msgFromServer.history;
         }
 
         if (msgType === 'settings_init') {
