@@ -4,5 +4,6 @@ const prodEnv = require('./prod.env')
 
 module.exports = merge(prodEnv, {
   NODE_ENV: '"development"',
-  SERVER_ADDR: '"localhost"'
+  SERVER_ADDR: '"localhost"',
+  SOCKET_PORT: '3000'
 })

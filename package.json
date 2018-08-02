@@ -10,7 +10,7 @@
     "build": "node build/build.js",
     "unit": "cross-env BABEL_ENV=test karma start test/unit/karma.conf.js --single-run",
     "test": "npm run unit",
-    "deploy": "node build/build.js && tar -czf dist1.tar.gz dist && scp dist1.tar.gz root@172.104.249.146:/var/www/html && ssh root@172.104.249.146 'cd /var/www/html && rm index.html && rm -r static && rm -r dist && tar -xzf dist1.tar.gz && rm dist1.tar.gz && mv dist/* . && exit'"
+    "deploy": "node build/build.js && rm dist1.tar.gz && tar -czf dist1.tar.gz dist && scp dist1.tar.gz root@172.104.249.146:/var/www/html && ssh root@172.104.249.146 'cd /var/www/html && rm index.html && rm -r static && rm -r dist && tar -xzf dist1.tar.gz && rm dist1.tar.gz && mv dist/* . && exit'"
   },
   "dependencies": {
     "@tweenjs/tween.js": "^17.1.1",
